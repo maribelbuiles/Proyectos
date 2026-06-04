@@ -4,15 +4,15 @@ import numpy as np
 import requests
 import plotly.express as px
 
-# =====================================================
+# =====================================
 # CONFIGURACIÓN GENERAL Y ESTILOS
-# =====================================================
+# =====================================
 st.set_page_config(
-    page_title="Tablero de Gestión - Ralentí",
+    page_title="Tablero",
     layout="wide"
 )
 
-# Inyección de estilos CSS globales (Líneas mini)
+# Estilos CSS globales (Líneas cortas)
 css = "<style>"
 css += "div[data-testid='stBlock']"
 css += " { padding: 0px; }"
@@ -48,41 +48,58 @@ st.markdown(css, unsafe_allow_html=True)
 
 META_RALENTI = 10
 
-# =====================================================
+# =====================================
 # API Y PROCESAMIENTO DE DATOS
-# =====================================================
+# =====================================
 @st.cache_data(ttl=3600)
 def cargar_datos():
-    usuario = "incubadora.pbi"
-    clave = "incubadora.pbi123"
-    base_url = "https://app.bronto-byte.com"
+    u = "incubadora.pbi"
+    p = "incubadora.pbi123"
+    b = "https://"
+    b += "app.bronto-byte.com"
 
     try:
-        token_response = requests.post(
-            base_url + "/api/obtenerToken",
-            json={"usuario": usuario, "clave": clave},
-            headers={"Content-Type": "application/json", "accept": "application/json"},
+        r1 = requests.post(
+            b + "/api/obtenerToken",
+            json={"usuario": u, "clave": p},
+            headers={
+                "Content-Type":
+                "application/json",
+                "accept":
+                "application/json"
+            },
             timeout=10
         )
-        token = token_response.json()["token"]
+        t = r1.json()["token"]
 
-        if token.lower().startswith("bearer "):
-            token = token[7:]
+        if t.lower().startswith(
+            "bearer "
+        ):
+            t = t[7:]
 
-        response = requests.get(
-            base_url + "/api/v2/gps-resumen/vehiculos",
-            headers={"Authorization": "Bearer " + token, "accept": "application/json"},
+        h = {
+            "Authorization":
+            "Bearer " + t,
+            "accept":
+            "application/json"
+        }
+        r2 = requests.get(
+            b + "/api/v2/gps-resumen/"
+            "vehiculos",
+            headers=h,
             timeout=15
         )
-        data = response.json()
+        data = r2.json()
     except Exception as e:
-        st.error("Error crítico al conectar con la API: " + str(e))
+        st.error(
+            "Error API: " + str(e)
+        )
         return pd.DataFrame()
 
     success = data.get("success")
-    id_cliente = data.get("id_cliente")
-    fecha_desde = data.get("fecha_desde")
-    fecha_hasta = data.get("fecha_hasta")
+    idc = data.get("id_cliente")
+    fd = data.get("fecha_desde")
+    fh = data.get("fecha_hasta")
 
     registros = data.get("data", [])
 
@@ -91,131 +108,61 @@ def cargar_datos():
 
     for row in registros:
         row["success"] = success
-        row["id_cliente"] = id_cliente
-        row["fecha_desde"] = fecha_desde
-        row["fecha_hasta"] = fecha_hasta
+        row["id_cliente"] = idc
+        row["fecha_desde"] = fd
+        row["fecha_hasta"] = fh
 
     df = pd.DataFrame(registros)
-    df["fecha"] = pd.to_datetime(df["fecha"])
-    df["ralenti_seg"] = df["detenido_seg"]
-
-    df["porcentaje_ralenti"] = np.where(
-        df["encendido_seg"] > 0,
-        (df["ralenti_seg"] / df["encendido_seg"]) * 100,
-        0
+    df["fecha"] = pd.to_datetime(
+        df["fecha"]
+    )
+    df["ralenti_seg"] = (
+        df["detenido_seg"]
     )
 
-    # Filtrado inicial de campos vacíos o inactivos
+    df["porcentaje_ralenti"] = (
+        np.where(
+            df["encendido_seg"] > 0,
+            (df["ralenti_seg"] /
+             df["encendido_seg"])
+            * 100,
+            0
+        )
+    )
+
     if "grupo" in df.columns:
         df = df[df["grupo"].notna()]
-        df["grupo"] = df["grupo"].astype(str).str.strip()
+        df["grupo"] = (
+            df["grupo"]
+            .astype(str)
+            .str.strip()
+        )
         df = df[df["grupo"] != ""]
-        df = df[~df["grupo"].str.lower().str.contains("inac", na=False)]
+        low = df["grupo"].str.lower()
+        df = df[
+            ~low.str.contains(
+                "inac",
+                na=False
+            )
+        ]
 
     return df
 
 df = cargar_datos()
 
 if df.empty:
-    st.warning("No se encontraron datos disponibles en la API.")
+    st.warning("Sin datos de API.")
     st.stop()
 
-# =====================================================
+# =====================================
 # ENCABEZADO PRINCIPAL
-# =====================================================
-st.title("TABLERO DE GESTIÓN – RALENTÍ")
+# =====================================
+st.title(
+    "TABLERO DE GESTIÓN – RALENTÍ"
+)
 
-# =====================================================
+# =====================================
 # FILTROS
-# =====================================================
-fil_col1, fil_col2, fil_col3, fil_col4, fil_col5 = st.columns([1.8, 1.8, 1.8, 1.8, 2.8])
-
-with fil_col1:
-    grupos = st.multiselect("Grupo", sorted(df["grupo"].unique()), placeholder="Todas")
-with fil_col2:
-    vehiculos = st.multiselect("Vehículo", sorted(df["nombre_dispositivo"].unique()), placeholder="Todas")
-with fil_col3:
-    tipos_v = sorted(df["tipo_vehiculo"].dropna().unique()) if "tipo_vehiculo" in df.columns else []
-    tipos = st.multiselect("Tipo de vehículo", tipos_v, placeholder="Todas")
-with fil_col4:
-    if "combustible" in df.columns:
-        combustibles_v = sorted(df["combustible"].dropna().unique())
-    elif "tipo_combustible" in df.columns:
-        combustibles_v = sorted(df["tipo_combustible"].dropna().unique())
-    else:
-        combustibles_v = []
-    combustibles = st.multiselect("Combustible", combustibles_v, placeholder="Todas")
-with fil_col5:
-    rango = st.date_input("Periodo", (df["fecha"].min(), df["fecha"].max()))
-
-# Filtrado dinámico del DataFrame
-dff = df.copy()
-
-if grupos:
-    dff = dff[dff["grupo"].isin(grupos)]
-if vehiculos:
-    dff = dff[dff["nombre_dispositivo"].isin(vehiculos)]
-if tipos:
-    if "tipo_vehiculo" in dff.columns:
-        dff = dff[dff["tipo_vehiculo"].isin(tipos)]
-if combustibles:
-    col_activa = "combustible" if "combustible" in dff.columns else "tipo_combustible"
-    if col_activa in dff.columns:
-        dff = dff[dff[col_activa].isin(combustibles)]
-if len(rango) == 2:
-    f_min, f_max = pd.Timestamp(rango[0]), pd.Timestamp(rango[1])
-    dff = dff[(dff["fecha"] >= f_min) & (dff["fecha"] <= f_max)]
-
-# =====================================================
-# RENDIMIENTO DEL TABLERO
-# =====================================================
-if not dff.empty:
-    
-    # --- CÁLCULO DE KPIS ---
-    total_encendido = dff["encendido_seg"].sum()
-    total_ralenti = dff["ralenti_seg"].sum()
-    ralenti_actual = round((total_ralenti / total_encendido) * 100, 2) if total_encendido > 0 else 0.0
-    
-    vehiculos_total = dff["nombre_dispositivo"].nunique()
-    promedios_vehiculo = dff.groupby("nombre_dispositivo")["porcentaje_ralenti"].mean()
-    fuera_meta = int((promedios_vehiculo > META_RALENTI).sum())
-    porcentaje_fuera = round((fuera_meta / vehiculos_total) * 100) if vehiculos_total > 0 else 0
-    
-    anterior_pct = 17.60
-    pp_diff = round(ralenti_actual - anterior_pct, 2)
-    pp_str = "+" + str(pp_diff) + " p.p." if pp_diff >= 0 else str(pp_diff) + " p.p."
-
-    # --- TARJETAS DE KPIS SUPERIORES ---
-    kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
-
-    with kpi_col1:
-        is_critico = "background-color: #fce8e6; border: 1px solid #f5c2c1;" if ralenti_actual > 15 else ""
-        html_kpi1 = "<div class='card-box' style='" + is_critico + " text-align: center;'>"
-        html_kpi1 += "<div style='font-size: 12px; font-weight: bold; color: #555; letter-spacing:0.5px;'>% RALENTÍ ACTUAL</div>"
-        html_kpi1 += "<div style='font-size: 38px; font-weight: 800; color: #d93025; margin-top: 5px;'>" + str(ralenti_actual) + "%</div>"
-        html_kpi1 += "<div style='font-size: 13px; font-weight: 600; color: #555; margin-top:2px;'>Meta: " + str(META_RALENTI) + "%</div>"
-        html_kpi1 += "<div style='display: inline-block; background-color: #d93025; color: white; font-size: 11px; font-weight: bold; padding: 4px 12px; border-radius: 4px; margin-top: 12px;'>⚠️ CRÍTICO (>15%)</div>"
-        html_kpi1 += "</div>"
-        st.markdown(html_kpi1, unsafe_allow_html=True)
-
-    with kpi_col2:
-        html_kpi2 = "<div class='card-box' style='text-align: center;'>"
-        html_kpi2 += "<div style='display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 5px;'>"
-        html_kpi2 += "<svg width='36' height='36' viewBox='0 0 24 24' fill='none' stroke='#d93025' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'>"
-        html_kpi2 += "<path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'></path><circle cx='9' cy='7' r='4'></circle>"
-        html_kpi2 += "<path d='M23 21v-2a4 4 0 0 0-3-3.87'></path><path d='M16 3.13a4 4 0 0 1 0 7.75'></path></svg>"
-        html_kpi2 += "<div style='text-align: left;'>"
-        html_kpi2 += "<div style='font-size: 36px; font-weight: 800; color: #d93025; line-height: 1;'>" + str(porcentaje_fuera) + "%</div>"
-        html_kpi2 += "<div style='font-size: 11px; font-weight: 700; color: #111; letter-spacing: 0.5px;'>FUERA DE META</div>"
-        html_kpi2 += "</div></div>"
-        html_kpi2 += "<div style='font-size: 17px; font-weight: 700; color: #111; margin-top: 20px;'>" + str(fuera_meta) + " de " + str(vehiculos_total) + " vehículos</div>"
-        html_kpi2 += "<div style='font-size: 13px; font-weight: 500; color: #444; margin-top: 2px;'>Meta: ≤ " + str(META_RALENTI) + "%</div></div>"
-        st.markdown(html_kpi2, unsafe_allow_html=True)
-
-    with kpi_col3:
-        html_kpi3 = "<div class='card-box' style='text-align: center;'>"
-        html_kpi3 += "<div style='display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 5px;'>"
-        html_kpi3 += "<svg width='38' height='38' viewBox='0 0 24 24' fill='none' stroke='#1e7e34' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'>"
-        html_kpi3 += "<polyline points='23 6 13.5 15.5 8.5 10.5 1 18'></polyline><polyline points='17 6 23 6 23 12'></polyline></svg>"
-        html_kpi3 += "<div style='text-align: left;'>"
-        html_kpi3 += "<div style='font-size:
+# =====================================
+fil1, fil2, fil3, fil4, fil5 = (
+    st.columns(
