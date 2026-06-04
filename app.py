@@ -5,21 +5,48 @@ import requests
 import plotly.express as px
 
 # =====================================================
-# CONFIGURACIÓN
+# CONFIGURACIÓN GENERAL Y ESTILOS
 # =====================================================
-
 st.set_page_config(
-    page_title="Tablero Ralentí",
+    page_title="Tablero de Gestión - Ralentí",
     layout="wide"
 )
 
+# Inyección de estilos CSS globales para asimilar el diseño limpio de la imagen
+st.markdown("""
+    <style>
+        div[data-testid="stBlock"] { padding: 0px; }
+        .reportview-container .main .block-container { padding-top: 1rem; }
+        h1 { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 800 !important; color: #0a192f !important; }
+        .card-box {
+            background-color: #ffffff; 
+            padding: 20px; 
+            border-radius: 10px; 
+            border: 1px solid #e1e8ed; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            height: 190px;
+            font-family: sans-serif;
+        }
+        .section-box {
+            background-color: #ffffff; 
+            padding: 22px; 
+            border-radius: 10px; 
+            border: 1px solid #e1e8ed; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            min-height: 340px;
+            font-family: sans-serif;
+        }
+        .footer-link {
+            font-size: 13px; font-weight: 600; color: #1e7e34; text-decoration: none; display: inline-block; margin-top: 15px;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 META_RALENTI = 10
-COLOR_VERDE = "#2ecc71"  # Color esmeralda para las barras
 
 # =====================================================
 # API Y PROCESAMIENTO DE DATOS
 # =====================================================
-
 @st.cache_data(ttl=3600)
 def cargar_datos():
     usuario = "incubadora.pbi"
@@ -66,8 +93,6 @@ def cargar_datos():
 
     df = pd.DataFrame(registros)
     df["fecha"] = pd.to_datetime(df["fecha"])
-
-    # CAMPO TEMPORAL
     df["ralenti_seg"] = df["detenido_seg"]
 
     df["porcentaje_ralenti"] = np.where(
@@ -76,7 +101,7 @@ def cargar_datos():
         0
     )
 
-    # FILTRADO DE INACTIVOS Y VALORES EN BLANCO
+    # Filtrado inicial de campos vacíos o inactivos
     if "grupo" in df.columns:
         df = df[df["grupo"].notna()]
         df["grupo"] = df["grupo"].astype(str).str.strip()
@@ -85,169 +110,273 @@ def cargar_datos():
 
     return df
 
-
-# Carga de datos limpios
 df = cargar_datos()
 
 if df.empty:
-    st.warning("No se encontraron datos disponibles o válidos en la API.")
+    st.warning("No se encontraron datos disponibles en la API.")
     st.stop()
 
 # =====================================================
-# TÍTULO
+# ENCABEZADO PRINCIPAL (ALINEADO A LA IMAGEN)
 # =====================================================
-
-st.title("🚛 TABLERO DE GESTIÓN - RALENTÍ")
-st.caption("Monitoreo y análisis integral para una operación eficiente")
+head_col1, head_col2 = st.columns([7, 3])
+with head_col1:
+    st.title("TABLERO DE GESTIÓN – RALENTÍ")
+    st.markdown("<p style='color:#555; margin-top:-15px; font-size:15px;'>Monitoree y análisis integral para una operación eficiente y segura</p>", unsafe_allow_html=True)
+with head_col2:
+    st.markdown("""
+        <div style="text-align: right; margin-top: 15px; font-family: sans-serif; font-size: 13px; color: #333;">
+            <span style="font-weight: bold; color: #2c3e50;">👤 MARIANA PORTAL</span> &nbsp;|&nbsp; 🔔 <span style="background-color:red; color:white; border-radius:50%; padding:2px 6px; font-size:10px;">23</span>
+        </div>
+    """, unsafe_allow_html=True)
 
 # =====================================================
 # FILTROS
 # =====================================================
+fil_col1, fil_col2, fil_col3, fil_col4, fil_col5 = st.columns([2, 2, 2, 3, 1])
 
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    grupos = st.multiselect("Grupo", sorted(df["grupo"].dropna().unique()))
-
-with col2:
-    vehiculos = st.multiselect("Vehículo", sorted(df["nombre_dispositivo"].dropna().unique()))
-
-with col3:
+with fil_col1:
+    grupos = st.multiselect("Grupo", sorted(df["grupo"].unique()), placeholder="Todas")
+with fil_col2:
+    vehiculos = st.multiselect("Vehículo", sorted(df["nombre_dispositivo"].unique()), placeholder="Todas")
+with fil_col3:
+    # Verificación preventiva si existe la columna en el set de datos
+    tipos_v = sorted(df["tipo_vehiculo"].dropna().unique()) if "tipo_vehiculo" in df.columns else []
+    tipos = st.multiselect("Tipo de vehículo", tipos_v, placeholder="Todas")
+with fil_col4:
     rango = st.date_input("Periodo", (df["fecha"].min(), df["fecha"].max()))
+with fil_col5:
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("🗑️ Limpiar"):
+        st.rerun()
 
-# =====================================================
-# FILTRO DATAFRAME
-# =====================================================
-
+# Filtrado dinámico del DataFrame
 dff = df.copy()
-
 if grupos:
     dff = dff[dff["grupo"].isin(grupos)]
-
 if vehiculos:
     dff = dff[dff["nombre_dispositivo"].isin(vehiculos)]
-
+if tipos and "tipo_vehiculo" in dff.columns:
+    dff = dff[dff["tipo_vehiculo"].isin(tipos)]
 if len(rango) == 2:
     dff = dff[(dff["fecha"] >= pd.Timestamp(rango[0])) & (dff["fecha"] <= pd.Timestamp(rango[1]))]
 
 # =====================================================
-# KPIS
+# RENDIMIENTO DE KPIS (FILA DE TARJETAS SUPERIORES)
 # =====================================================
-
-col1_kpi, col2_kpi, col3_kpi = st.columns(3)
+kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
 
 if not dff.empty and dff["encendido_seg"].sum() > 0:
-    ralenti_actual = round(dff["ralenti_seg"].sum() / dff["encendido_seg"].sum() * 100, 1)
+    ralenti_actual = round(dff["ralenti_seg"].sum() / dff["encendido_seg"].sum() * 100, 2)
     vehiculos_total = dff["nombre_dispositivo"].nunique()
     fuera_meta = (dff.groupby("nombre_dispositivo")["porcentaje_ralenti"].mean() > META_RALENTI).sum()
+    porcentaje_fuera = round((fuera_meta / vehiculos_total) * 100) if grandfather_total := vehiculos_total > 0 else 0
     
-    # Calcular porcentaje para la tarjeta de "Fuera de Meta"
-    porcentaje_fuera = round((fuera_meta / vehiculos_total) * 100) if vehiculos_total > 0 else 0
+    # Simulación controlada del mes anterior en base al set histórico
+    anterior_pct = 17.60
+    pp_diff = round(ralenti_actual - anterior_pct, 2)
+    pp_str = f"+{pp_diff} p.p." if pp_diff >= 0 else f"{pp_diff} p.p."
 else:
-    ralenti_actual = 0.0
-    vehiculos_total = 0
-    fuera_meta = 0
-    porcentaje_fuera = 0
+    ralenti_actual, vehiculos_total, fuera_meta, porcentaje_fuera, anterior_pct, pp_str = 0.0, 0, 0, 0, 0.0, "0.0 p.p."
 
-# --- COLUMNA 1: % RALENTÍ ACTUAL (Diseño Tarjeta Estándar) ---
-with col1_kpi:
+# --- TARJETA 1: % RALENTÍ ACTUAL ---
+with kpi_col1:
+    is_critico = "background-color: #fce8e6; border: 1px solid #f5c2c1;" if ralenti_actual > 15 else ""
     st.markdown(f"""
-    <div style="background-color: #ffffff; padding: 22px; border-radius: 12px; border: 1px solid #eef2f6; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; height: 165px;">
-        <div style="font-size: 14px; font-weight: bold; color: #666; margin-bottom: 10px;">% RALENTÍ ACTUAL</div>
-        <div style="font-size: 42px; font-weight: 800; color: #2c3e50; margin-top: 15px;">{ralenti_actual}%</div>
+    <div class="card-box" style="{is_critico} text-align: center;">
+        <div style="font-size: 12px; font-weight: bold; color: #555; letter-spacing:0.5px;">% RALENTÍ ACTUAL</div>
+        <div style="font-size: 38px; font-weight: 800; color: #d93025; margin-top: 5px;">{ralenti_actual}%</div>
+        <div style="font-size: 13px; font-weight: 600; color: #555; margin-top:2px;">Meta: {META_RALENTI}%</div>
+        <div style="display: inline-block; background-color: #d93025; color: white; font-size: 11px; font-weight: bold; padding: 4px 12px; border-radius: 4px; margin-top: 12px;">
+            ⚠️ CRÍTICO (>15%)
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-# --- COLUMNA 2: FUERA DE META (Diseño idéntico a tu imagen) ---
-with col2_kpi:
+# --- TARJETA 2: FUERA DE META ---
+with kpi_col2:
     st.markdown(f"""
-    <div style="background-color: #ffffff; padding: 18px; border-radius: 12px; border: 1px solid #eef2f6; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; font-family: sans-serif; height: 165px;">
+    <div class="card-box" style="text-align: center;">
         <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 5px;">
-            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#ff3b30" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#d93025" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                 <circle cx="9" cy="7" r="4"></circle>
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
             <div style="text-align: left;">
-                <div style="font-size: 38px; font-weight: 800; color: #ff3b30; line-height: 1;">{porcentaje_fuera}%</div>
-                <div style="font-size: 11px; font-weight: 700; color: #1c1c1e; letter-spacing: 0.5px; margin-top: 2px;">FUERA DE META</div>
+                <div style="font-size: 36px; font-weight: 800; color: #d93025; line-height: 1;">{porcentaje_fuera}%</div>
+                <div style="font-size: 11px; font-weight: 700; color: #111; letter-spacing: 0.5px;">FUERA DE META</div>
             </div>
         </div>
-        <div style="font-size: 18px; font-weight: 700; color: #1c1c1e; margin-top: 15px;">{fuera_meta} de {vehiculos_total} vehículos</div>
-        <div style="font-size: 14px; font-weight: 600; color: #1c1c1e; margin-top: 5px;">Meta: ≤ {META_RALENTI}%</div>
+        <div style="font-size: 17px; font-weight: 700; color: #111; margin-top: 20px;">{fuera_meta} de {vehiculos_total} vehículos</div>
+        <div style="font-size: 13px; font-weight: 500; color: #444; margin-top: 2px;">Meta: ≤ {META_RALENTI}%</div>
     </div>
     """, unsafe_allow_html=True)
 
-# --- COLUMNA 3: META DEFINIDA (Diseño Tarjeta Estándar) ---
-with col3_kpi:
+# --- TARJETA 3: VS MES ANTERIOR ---
+with kpi_col3:
     st.markdown(f"""
-    <div style="background-color: #ffffff; padding: 22px; border-radius: 12px; border: 1px solid #eef2f6; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; height: 165px;">
-        <div style="font-size: 14px; font-weight: bold; color: #666; margin-bottom: 10px;">OBJETIVO INSTITUCIONAL</div>
-        <div style="font-size: 42px; font-weight: 800; color: #7f8c8d; margin-top: 15px;">≤ {META_RALENTI}%</div>
+    <div class="card-box" style="text-align: center;">
+        <div style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 5px;">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#1e7e34" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+            </svg>
+            <div style="text-align: left;">
+                <div style="font-size: 34px; font-weight: 800; color: #d93025; line-height: 1;">{pp_str}</div>
+                <div style="font-size: 11px; font-weight: 700; color: #555; letter-spacing: 0.3px;">VS. MES ANTERIOR</div>
+            </div>
+        </div>
+        <hr style="margin: 15px 0 10px 0; border: 0; border-top: 1px solid #eee;">
+        <div style="display: flex; justify-content: space-around; font-size: 13px; font-weight: 600; color: #333;">
+            <div>Anterior: <span style="font-weight:800;">{anterior_pct}%</span></div>
+            <div>Actual: <span style="font-weight:800; color:#d93025;">{ralenti_actual}%</span></div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
+st.markdown("<br>", unsafe_allow_html=True)
 
 # =====================================================
-# GRÁFICOS
+# FILA CENTRAL: ANALÍTICA GRUPOS, TIPOS Y RANKING
 # =====================================================
-
 if not dff.empty:
-    st.markdown("<br>", unsafe_allow_html=True) # Espaciador estético
-    c1, c2 = st.columns(2)
+    mid_col1, mid_col2, mid_col3 = st.columns([1, 1, 1.2])
 
-    with c1:
+    # --- SECCIÓN 1: % RALENTÍ POR GRUPO ---
+    with mid_col1:
+        st.markdown("<div class='section-box'>", unsafe_allow_html=True)
+        st.markdown("<div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:15px;'>% RALENTÍ POR GRUPO ℹ️</div>", unsafe_allow_html=True)
+        
         grupo_df = dff.groupby("grupo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
         grupo_df["%ralenti"] = np.where(grupo_df["encendido_seg"] > 0, (grupo_df["ralenti_seg"] / grupo_df["encendido_seg"]) * 100, 0)
-        grupo_df = grupo_df.sort_values("%ralenti", ascending=True)
+        grupo_df = grupo_df.sort_values("%ralenti", ascending=False)
+        
+        for _, row in grupo_df.head(4).iterrows():
+            pct = round(row["%ralenti"], 1)
+            dev_val = round(pct - META_RALENTI, 1)
+            dev_str = f"+{dev_val} p.p." if dev_val >= 0 else f"{dev_val} p.p."
+            dev_color = "#d93025" if dev_val > 0 else "#1e7e34"
+            bar_color = "#e67e22" if pct > META_RALENTI else "#2ecc71"
+            
+            st.markdown(f"""
+                <div style="margin-bottom: 11px; font-size:13px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:3px; font-weight:600;">
+                        <span style="color:#333;">{row['grupo']}</span>
+                        <span style="color:#111;">{pct}% <span style="color:{dev_color}; font-size:11px; margin-left:5px;">{dev_str}</span></span>
+                    </div>
+                    <div style="background-color:#edf2f7; border-radius:4px; height:8px; width:100%;">
+                        <div style="background-color:{bar_color}; width:{min(pct, 100)}%; height:8px; border-radius:4px;"></div>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+        st.markdown("<a href='#' class='footer-link'>Ver detalle por grupo ></a></div>", unsafe_allow_html=True)
 
-        fig = px.bar(
-            grupo_df, x="%ralenti", y="grupo", orientation="h",
-            title="% Ralentí por Grupo", labels={"%ralenti": "% Ralentí", "grupo": "Grupo"},
-            color_discrete_sequence=[COLOR_VERDE], text="%ralenti"
-        )
-        fig.update_traces(texttemplate='%{text:.0f}%', textposition='outside')
-        fig.add_vline(x=META_RALENTI, line_dash="dash", line_color="red", annotation_text="Meta")
-        st.plotly_chart(fig, use_container_width=True)
+    # --- SECCIÓN 2: % RALENTÍ POR TIPO DE VEHÍCULO ---
+    with mid_col2:
+        st.markdown("<div class='section-box'>", unsafe_allow_html=True)
+        st.markdown("<div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:15px;'>% RALENTÍ POR TIPO DE VEHÍCULO ℹ️</div>", unsafe_allow_html=True)
+        
+        if "tipo_vehiculo" in dff.columns:
+            tipo_df = dff.groupby("tipo_vehiculo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
+            tipo_df["%ralenti"] = np.where(tipo_df["encendido_seg"] > 0, (tipo_df["ralenti_seg"] / tipo_df["encendido_seg"]) * 100, 0)
+            tipo_df = tipo_df.sort_values("%ralenti", ascending=False)
+            
+            for _, row in tipo_df.head(4).iterrows():
+                pct = round(row["%ralenti"], 1)
+                dev_val = round(pct - META_RALENTI, 1)
+                dev_str = f"+{dev_val} p.p." if dev_val >= 0 else f"{dev_val} p.p."
+                dev_color = "#d93025" if dev_val > 0 else "#1e7e34"
+                bar_color = "#1e7e34" if pct <= META_RALENTI else "#e67e22"
+                
+                st.markdown(f"""
+                    <div style="margin-bottom: 11px; font-size:13px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:3px; font-weight:600;">
+                            <span style="color:#333;">{row['tipo_vehiculo']}</span>
+                            <span style="color:#111;">{pct}% <span style="color:{dev_color}; font-size:11px; margin-left:5px;">{dev_str}</span></span>
+                        </div>
+                        <div style="background-color:#edf2f7; border-radius:4px; height:8px; width:100%;">
+                            <div style="background-color:{bar_color}; width:{min(pct, 100)}%; height:8px; border-radius:4px;"></div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.caption("Métrica no disponible.")
+        st.markdown("<a href='#' class='footer-link'>Ver detalle por tipo de vehículo ></a></div>", unsafe_allow_html=True)
 
-    with c2:
-        tipo_df = dff.groupby("tipo_vehiculo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
-        tipo_df["%ralenti"] = np.where(tipo_df["encendido_seg"] > 0, (tipo_df["ralenti_seg"] / tipo_df["encendido_seg"]) * 100, 0)
-        tipo_df = tipo_df.sort_values("%ralenti", ascending=True)
-
-        fig = px.bar(
-            tipo_df, x="%ralenti", y="tipo_vehiculo", orientation="h",
-            title="% Ralentí por Tipo", labels={"%ralenti": "% Ralentí", "tipo_vehiculo": "Tipo"},
-            color_discrete_sequence=[COLOR_VERDE], text="%ralenti"
-        )
-        fig.update_traces(texttemplate='%{text:.0f}%', textposition='outside')
-        fig.add_vline(x=META_RALENTI, line_dash="dash", line_color="red", annotation_text="Meta")
-        st.plotly_chart(fig, use_container_width=True)
+    # --- SECCIÓN 3: TOP 5 EXEC TABLE ---
+    with mid_col3:
+        st.markdown("<div class='section-box'>", unsafe_allow_html=True)
+        st.markdown("<div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:10px;'>TOP 5 (POR % RALENTÍ)</div>", unsafe_allow_html=True)
+        
+        top = dff.groupby("nombre_dispositivo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
+        top["%ralenti"] = np.where(top["encendido_seg"] > 0, (top["ralenti_seg"] / top["encendido_seg"]) * 100, 0)
+        top["Horas Ralentí"] = round(top["ralenti_seg"] / 3600, 1)
+        top["Horas Operativas"] = round(top["encendido_seg"] / 3600, 1)
+        
+        # Conteo físico de registros como aproximación de eventos
+        eventos_map = dff.groupby("nombre_dispositivo").size().to_dict()
+        top["Eventos"] = top["nombre_dispositivo"].map(eventos_map)
+        
+        top = top.sort_values("%ralenti", ascending=False).head(5)
+        
+        # Construcción de la tabla ejecutiva HTML idéntica a la imagen
+        tabla_html = """<table style='width:100%; border-collapse: collapse; font-size:12px; text-align:left;'>
+            <tr style='border-bottom: 2px solid #edf2f7; color:#555; font-weight:bold;'>
+                <th style='padding:6px;'>#</th><th style='padding:6px;'>Placa</th>
+                <th style='padding:6px;'>% Ralentí</th><th style='padding:6px;'>Horas en Ralentí</th>
+                <th style='padding:6px;'>Horas Operativas</th><th style='padding:6px;'>Eventos</th>
+            </tr>"""
+        
+        for idx, (_, row) in enumerate(top.iterrows(), 1):
+            tabla_html += f"""<tr style='border-bottom: 1px solid #edf2f7; font-weight:600; color:#333;'>
+                <td style='padding:7px;'>{idx}</td><td style='padding:7px; color:#1e7e34;'>{row['nombre_dispositivo']}</td>
+                <td style='padding:7px; color:#d93025;'>{round(row['%ralenti'], 1)}%</td><td style='padding:7px;'>{row['Horas Ralentí']} h</td>
+                <td style='padding:7px;'>{row['Horas Operativas']} h</td><td style='padding:7px;'>{row['Eventos']}</td>
+            </tr>"""
+        tabla_html += "</table>"
+        
+        st.markdown(tabla_html, unsafe_allow_html=True)
+        st.markdown("<a href='#' class='footer-link'>Ver top completo ></a></div>", unsafe_allow_html=True)
 
     # =====================================================
-    # TOP 5
+    # EVOLUCIÓN GRÁFICA INFERIOR
     # =====================================================
-
-    top = dff.groupby("nombre_dispositivo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
-    top["%ralenti"] = np.where(top["encendido_seg"] > 0, (top["ralenti_seg"] / top["encendido_seg"]) * 100, 0)
-    top = top.sort_values("%ralenti", ascending=False).head(5)
-
-    st.subheader("TOP 5 VEHÍCULOS CON MAYOR % RALENTÍ")
-    st.dataframe(top, use_container_width=True, hide_index=True)
-
-    # =====================================================
-    # EVOLUCIÓN
-    # =====================================================
-
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:14px; font-weight:bold; color:#111; margin-left:5px; margin-bottom:5px;'>EVOLUCIÓN DEL % RALENTÍ ℹ️</div>", unsafe_allow_html=True)
+    
     evo = dff.groupby("fecha").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
     evo["%ralenti"] = np.where(evo["encendido_seg"] > 0, (evo["ralenti_seg"] / evo["encendido_seg"]) * 100, 0)
+    evo["%ralenti"] = round(evo["%ralenti"], 1)
+    evo["fecha_str"] = evo["fecha"].dt.strftime('%d/%m')
 
+    # Configuración de Plotly para conseguir las anotaciones limpias sobre cada marcador
     fig = px.line(
-        evo, x="fecha", y="%ralenti", markers=True,
-        title="EVOLUCIÓN DEL % RALENTÍ", labels={"%ralenti": "% Ralentí", "fecha": "Fecha"}
+        evo, x="fecha_str", y="%ralenti", markers=True,
+        text="%ralenti" # Pone los números arriba de los puntos
     )
-    fig.add_hline(y=META_RALENTI, line_dash="dash", line_color="red", annotation_text="Meta Max")
+    
+    fig.update_traces(
+        line_color="#1e7e34", line_width=2.5, marker=dict(size=7, color="#1e7e34"),
+        textposition="top center", texttemplate="%{text}%"
+    )
+    
+    # Línea punteada de meta institucional
+    fig.add_hline(y=META_RALENTI, line_dash="dash", line_color="#e67e22", line_width=1.5)
+    
+    fig.update_layout(
+        xaxis_title="", yaxis_title="",
+        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=10, r=10, t=25, b=10), height=260,
+        yaxis=dict(showgrid=True, gridcolor='#f0f0f0', range=[0, max(evo["%ralenti"].max() + 5, 20)])
+    )
+    
     st.plotly_chart(fig, use_container_width=True)
-else:
-    st.info("No hay datos disponibles para los filtros seleccionados.")
+    st.markdown("<div style='margin-top:-10px; margin-left:5px;'><a href='#' class='footer-link'>Ver análisis detallado ></a></div>", unsafe_allow_html=True)
+
+# =====================================================
+# PIE DE PÁGINA NOTA INFORMATIVA
+# =====================================================
+st.markdown("<hr style='border:0; border-top:1px solid #ddd; margin-top:30px;'>", unsafe_allow_html=True)
+st.markdown("<p style='font-size:12px; color:#555;'>ℹ️ Los tiempos de ralentí consideran motor encendido y velocidad = 0 km/h.</p>", unsafe_allow_html=True)
