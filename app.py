@@ -22,7 +22,6 @@ COLOR_VERDE = "#2ecc71"  # Color esmeralda para las barras
 
 @st.cache_data(ttl=3600)
 def cargar_datos():
-    # NOTA DE SEGURIDAD: Para producción en GitHub, se recomienda usar st.secrets
     usuario = "incubadora.pbi"
     clave = "incubadora.pbi123"
     base_url = "https://app.bronto-byte.com"
@@ -200,7 +199,6 @@ if not dff.empty:
             0
         )
         
-        # Ordenamos de menor a mayor para que la barra más larga quede arriba
         grupo_df = grupo_df.sort_values("%ralenti", ascending=True)
 
         fig = px.bar(
@@ -210,7 +208,14 @@ if not dff.empty:
             orientation="h",
             title="% Ralentí por Grupo",
             labels={"%ralenti": "% Ralentí", "grupo": "Grupo"},
-            color_discrete_sequence=[COLOR_VERDE]  # <- MODIFICACIÓN COLOR VERDE
+            color_discrete_sequence=[COLOR_VERDE],
+            text="%ralenti"  # <- Habilita el texto en las barras
+        )
+        
+        # Formatea el texto: sin decimales (.0f) y añade el símbolo % fuera de la barra
+        fig.update_traces(
+            texttemplate='%{text:.0f}%', 
+            textposition='outside'
         )
         
         fig.add_vline(x=META_RALENTI, line_dash="dash", line_color="red", annotation_text="Meta")
@@ -245,7 +250,14 @@ if not dff.empty:
             orientation="h",
             title="% Ralentí por Tipo",
             labels={"%ralenti": "% Ralentí", "tipo_vehiculo": "Tipo"},
-            color_discrete_sequence=[COLOR_VERDE]  # <- MODIFICACIÓN COLOR VERDE
+            color_discrete_sequence=[COLOR_VERDE],
+            text="%ralenti"  # <- Habilita el texto en las barras
+        )
+        
+        # Formatea el texto: sin decimales (.0f) y añade el símbolo % fuera de la barra
+        fig.update_traces(
+            texttemplate='%{text:.0f}%', 
+            textposition='outside'
         )
         
         fig.add_vline(x=META_RALENTI, line_dash="dash", line_color="red", annotation_text="Meta")
