@@ -17,7 +17,7 @@ META_RALENTI = 10
 COLOR_VERDE = "#2ecc71"  # Color esmeralda para las barras
 
 # =====================================================
-# API
+# API Y PROCESAMIENTO DE DATOS
 # =====================================================
 
 @st.cache_data(ttl=3600)
@@ -85,19 +85,21 @@ def cargar_datos():
         0
     )
 
+    # -------------------------------------------------
+    # FILTRADO RADICAL DE INACTIVOS (DENTRO DEL CACHÉ)
+    # -------------------------------------------------
+    if "grupo" in df.columns:
+        # Forzamos todo a texto, quitamos espacios y eliminamos cualquier fila que contenga "inac"
+        df = df[df["grupo"].notna()]
+        df = df[~df["grupo"].astype(str).str.strip().str.lower().str.contains("inac", na=False)]
+
     return df
 
 
+# Carga de datos limpios
 df = cargar_datos()
 
-# =====================================================
-# ELIMINAR GRUPOS INACTIVOS (MODIFICACIÓN)
-# =====================================================
-if not df.empty and "grupo" in df.columns:
-    # Filtra y elimina "inactivos" ignorando si viene en mayúsculas o minúsculas
-    df = df[df["grupo"].str.lower().fillna("") != "inactivos"]
-
-# Control de seguridad si el dataframe queda vacío
+# Control de seguridad si el dataframe queda vacío tras el filtro
 if df.empty:
     st.warning("No se encontraron datos disponibles o válidos en la API.")
     st.stop()
@@ -210,138 +212,3 @@ if not dff.empty:
 
         fig = px.bar(
             grupo_df,
-            x="%ralenti",
-            y="grupo",
-            orientation="h",
-            title="% Ralentí por Grupo",
-            labels={"%ralenti": "% Ralentí", "grupo": "Grupo"},
-            color_discrete_sequence=[COLOR_VERDE],
-            text="%ralenti"
-        )
-        
-        fig.update_traces(
-            texttemplate='%{text:.0f}%', 
-            textposition='outside'
-        )
-        
-        fig.add_vline(x=META_RALENTI, line_dash="dash", line_color="red", annotation_text="Meta")
-
-        st.plotly_chart(
-            fig,
-            use_container_width=True
-        )
-
-    with c2:
-        tipo_df = (
-            dff.groupby("tipo_vehiculo")
-            .agg({
-                "ralenti_seg":"sum",
-                "encendido_seg":"sum"
-            })
-            .reset_index()
-        )
-
-        tipo_df["%ralenti"] = np.where(
-            tipo_df["encendido_seg"] > 0,
-            (tipo_df["ralenti_seg"] / tipo_df["encendido_seg"]) * 100,
-            0
-        )
-        
-        tipo_df = tipo_df.sort_values("%ralenti", ascending=True)
-
-        fig = px.bar(
-            tipo_df,
-            x="%ralenti",
-            y="tipo_vehiculo",
-            orientation="h",
-            title="% Ralentí por Tipo",
-            labels={"%ralenti": "% Ralentí", "tipo_vehiculo": "Tipo"},
-            color_discrete_sequence=[COLOR_VERDE],
-            text="%ralenti"
-        )
-        
-        fig.update_traces(
-            texttemplate='%{text:.0f}%', 
-            textposition='outside'
-        )
-        
-        fig.add_vline(x=META_RALENTI, line_dash="dash", line_color="red", annotation_text="Meta")
-
-        st.plotly_chart(
-            fig,
-            use_container_width=True
-        )
-
-    # =====================================================
-    # TOP 5
-    # =====================================================
-
-    top = (
-        dff.groupby("nombre_dispositivo")
-        .agg({
-            "ralenti_seg":"sum",
-            "encendido_seg":"sum"
-        })
-        .reset_index()
-    )
-
-    top["%ralenti"] = np.where(
-        top["encendido_seg"] > 0,
-        (top["ralenti_seg"] / top["encendido_seg"]) * 100,
-        0
-    )
-
-    top = top.sort_values(
-        "%ralenti",
-        ascending=False
-    ).head(5)
-
-    st.subheader("TOP 5 VEHÍCULOS CON MAYOR % RALENTÍ")
-
-    st.dataframe(
-        top,
-        use_container_width=True,
-        hide_index=True
-    )
-
-    # =====================================================
-    # EVOLUCIÓN
-    # =====================================================
-
-    evo = (
-        dff.groupby("fecha")
-        .agg({
-            "ralenti_seg":"sum",
-            "encendido_seg":"sum"
-        })
-        .reset_index()
-    )
-
-    evo["%ralenti"] = np.where(
-        evo["encendido_seg"] > 0,
-        (evo["ralenti_seg"] / evo["encendido_seg"]) * 100,
-        0
-    )
-
-    fig = px.line(
-        evo,
-        x="fecha",
-        y="%ralenti",
-        markers=True,
-        title="EVOLUCIÓN DEL % RALENTÍ",
-        labels={"%ralenti": "% Ralentí", "fecha": "Fecha"}
-    )
-
-    fig.add_hline(
-        y=META_RALENTI,
-        line_dash="dash",
-        line_color="red",
-        annotation_text="Meta Max"
-    )
-
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
-else:
-    st.info("No hay datos disponibles para los filtros seleccionados.")
