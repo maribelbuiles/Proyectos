@@ -115,20 +115,18 @@ if df.empty:
     st.stop()
 
 # =====================================================
-# ENCABEZADO PRINCIPAL CON IMAGEN DE VEHÍCULO REPARTIDOR
+# ENCABEZADO PRINCIPAL CON IMAGEN DE VEHÍCULO KIKES
 # =====================================================
 head_col1, head_col2 = st.columns([7, 3])
 with head_col1:
     st.title("TABLERO DE GESTIÓN – RALENTÍ")
 
 with head_col2:
-    # URL corregida: Imagen de un camión de reparto logístico comercial en ruta
     url_vehiculo_kikes = "https://images.unsplash.com/photo-1605787020600-b9ebd5df1d07?w=400&auto=format&fit=crop&q=80"
-    st.markdown(f"""
-        <div style="text-align: right; margin-top: 5px;">
-            <img src="{url_vehiculo_kikes}" style="width: 100%; max-width: 260px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); border: 1px solid #e1e8ed;">
-        </div>
-    """, unsafe_allow_html=True)
+    html_img = "<div style='text-align: right; margin-top: 5px;'>"
+    html_img += "<img src='" + url_vehiculo_kikes + "' style='width: 100%; max-width: 260px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); border: 1px solid #e1e8ed;'>"
+    html_img += "</div>"
+    st.markdown(html_img, unsafe_allow_html=True)
 
 # =====================================================
 # FILTROS
@@ -161,75 +159,4 @@ if vehiculos:
     dff = dff[dff["nombre_dispositivo"].isin(vehiculos)]
 if tipos and "tipo_vehiculo" in dff.columns:
     dff = dff[dff["tipo_vehiculo"].isin(tipos)]
-if combustibles:
-    col_activa = "combustible" if "combustible" in dff.columns else "tipo_combustible"
-    if col_activa in dff.columns:
-        dff = dff[dff[col_activa].isin(combustibles)]
-if len(rango) == 2:
-    dff = dff[(dff["fecha"] >= pd.Timestamp(rango[0])) & (dff["fecha"] <= pd.Timestamp(rango[1]))]
-
-# =====================================================
-# RENDIMIENTO DEL TABLERO
-# =====================================================
-if not dff.empty:
-    
-    # --- CÁLCULO DE KPIS ---
-    total_encendido = dff["encendido_seg"].sum()
-    total_ralenti = dff["ralenti_seg"].sum()
-    ralenti_actual = round((total_ralenti / total_encendido) * 100, 2) if total_encendido > 0 else 0.0
-    
-    vehiculos_total = dff["nombre_dispositivo"].nunique()
-    promedios_vehiculo = dff.groupby("nombre_dispositivo")["porcentaje_ralenti"].mean()
-    fuera_meta = int((promedios_vehiculo > META_RALENTI).sum())
-    porcentaje_fuera = round((fuera_meta / vehiculos_total) * 100) if vehiculos_total > 0 else 0
-    
-    anterior_pct = 17.60
-    pp_diff = round(ralenti_actual - anterior_pct, 2)
-    pp_str = f"+{pp_diff} p.p." if pp_diff >= 0 else f"{pp_diff} p.p."
-
-    # --- TARJETAS DE KPIS SUPERIORES ---
-    kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
-
-    with kpi_col1:
-        is_critico = "background-color: #fce8e6; border: 1px solid #f5c2c1;" if ralenti_actual > 15 else ""
-        st.markdown(f"""
-        <div class="card-box" style="{is_critico} text-align: center;">
-            <div style="font-size: 12px; font-weight: bold; color: #555; letter-spacing:0.5px;">% RALENTÍ ACTUAL</div>
-            <div style="font-size: 38px; font-weight: 800; color: #d93025; margin-top: 5px;">{ralenti_actual}%</div>
-            <div style="font-size: 13px; font-weight: 600; color: #555; margin-top:2px;">Meta: {META_RALENTI}%</div>
-            <div style="display: inline-block; background-color: #d93025; color: white; font-size: 11px; font-weight: bold; padding: 4px 12px; border-radius: 4px; margin-top: 12px;">
-                ⚠️ CRÍTICO (>15%)
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with kpi_col2:
-        st.markdown(f"""
-        <div class="card-box" style="text-align: center;">
-            <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 5px;">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#d93025" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-                <div style="text-align: left;">
-                    <div style="font-size: 36px; font-weight: 800; color: #d93025; line-height: 1;">{porcentaje_fuera}%</div>
-                    <div style="font-size: 11px; font-weight: 700; color: #111; letter-spacing: 0.5px;">FUERA DE META</div>
-                </div>
-            </div>
-            <div style="font-size: 17px; font-weight: 700; color: #111; margin-top: 20px;">{fuera_meta} de {vehiculos_total} vehículos</div>
-            <div style="font-size: 13px; font-weight: 500; color: #444; margin-top: 2px;">Meta: ≤ {META_RALENTI}%</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with kpi_col3:
-        st.markdown(f"""
-        <div class="card-box" style="text-align: center;">
-            <div style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 5px;">
-                <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#1e7e34" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                    <polyline points="17 6 23 6 23 12"></polyline>
-                </svg>
-                <div style="text-align: left;">
-                    <div style="font-size: 34px; font-weight: 800; color: #d93025; line-height:
+if
