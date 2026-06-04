@@ -251,7 +251,7 @@ if not dff.empty:
     # --- FILA CENTRAL ---
     mid_col1, mid_col2, mid_col3 = st.columns([1, 1, 1.2])
 
-    # 1. Columna Grupo
+    # 1. Columna Grupo (Enlace Removido)
     with mid_col1:
         grupo_df = dff.groupby("grupo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
         grupo_df["%ralenti"] = np.where(grupo_df["encendido_seg"] > 0, (grupo_df["ralenti_seg"] / grupo_df["encendido_seg"]) * 100, 0)
@@ -277,10 +277,10 @@ if not dff.empty:
                         <div style="background-color:{bar_color}; width:{min(pct, 100)}%; height:8px; border-radius:4px;"></div>
                     </div>
                 </div>"""
-        html_grupo += "<a href='#' class='footer-link'>Ver detalle por grupo ></a></div>"
+        html_grupo += "</div>"
         st.markdown(html_grupo, unsafe_allow_html=True)
 
-    # 2. Columna Tipo de Vehículo
+    # 2. Columna Tipo de Vehículo (Enlace Removido)
     with mid_col2:
         html_tipo = """<div class='section-box'>
         <div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:15px;'>% RALENTÍ POR TIPO DE VEHÍCULO ℹ️</div>"""
@@ -310,10 +310,10 @@ if not dff.empty:
         else:
             html_tipo += "<p style='color:#777; font-size:13px; padding-top:10px;'>No hay datos de tipo de vehículo disponibles.</p>"
             
-        html_tipo += "<a href='#' class='footer-link'>Ver detalle por tipo de vehículo ></a></div>"
+        html_tipo += "</div>"
         st.markdown(html_tipo, unsafe_allow_html=True)
 
-    # 3. Columna Top 5 Ranking Tabla
+    # 3. Columna Top 5 Ranking Tabla (Enlace Removido)
     with mid_col3:
         top = dff.groupby("nombre_dispositivo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
         top["%ralenti"] = np.where(top["encendido_seg"] > 0, (top["ralenti_seg"] / top["encendido_seg"]) * 100, 0)
@@ -338,7 +338,7 @@ if not dff.empty:
                 <td style='padding:7px; color:#d93025;'>{round(row['%ralenti'], 1)}%</td><td style='padding:7px;'>{row['Horas Ralentí']} h</td>
                 <td style='padding:7px;'>{row['Horas Operativas']} h</td><td style='padding:7px;'>{row['Eventos']}</td>
             </tr>"""
-        html_top += "</table><a href='#' class='footer-link'>Ver top completo ></a></div>"
+        html_top += "</table></div>"
         st.markdown(html_top, unsafe_allow_html=True)
 
     # --- EVOLUCIÓN GRÁFICA INFERIOR ---
