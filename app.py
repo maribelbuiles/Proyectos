@@ -117,46 +117,4 @@ if df.empty:
 # =====================================================
 # ENCABEZADO PRINCIPAL CON IMAGEN DE VEHÍCULO KIKES
 # =====================================================
-head_col1, head_col2 = st.columns([7, 3])
-with head_col1:
-    st.title("TABLERO DE GESTIÓN – RALENTÍ")
-
-with head_col2:
-    url_vehiculo_kikes = "https://images.unsplash.com/photo-1605787020600-b9ebd5df1d07?w=400&auto=format&fit=crop&q=80"
-    html_img = "<div style='text-align: right; margin-top: 5px;'>"
-    html_img += "<img src='" + url_vehiculo_kikes + "' style='width: 100%; max-width: 260px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); border: 1px solid #e1e8ed;'>"
-    html_img += "</div>"
-    st.markdown(html_img, unsafe_allow_html=True)
-
-# =====================================================
-# FILTROS
-# =====================================================
-fil_col1, fil_col2, fil_col3, fil_col4, fil_col5 = st.columns([1.8, 1.8, 1.8, 1.8, 2.8])
-
-with fil_col1:
-    grupos = st.multiselect("Grupo", sorted(df["grupo"].unique()), placeholder="Todas")
-with fil_col2:
-    vehiculos = st.multiselect("Vehículo", sorted(df["nombre_dispositivo"].unique()), placeholder="Todas")
-with fil_col3:
-    tipos_v = sorted(df["tipo_vehiculo"].dropna().unique()) if "tipo_vehiculo" in df.columns else []
-    tipos = st.multiselect("Tipo de vehículo", tipos_v, placeholder="Todas")
-with fil_col4:
-    if "combustible" in df.columns:
-        combustibles_v = sorted(df["combustible"].dropna().unique())
-    elif "tipo_combustible" in df.columns:
-        combustibles_v = sorted(df["tipo_combustible"].dropna().unique())
-    else:
-        combustibles_v = []
-    combustibles = st.multiselect("Combustible", combustibles_v, placeholder="Todas")
-with fil_col5:
-    rango = st.date_input("Periodo", (df["fecha"].min(), df["fecha"].max()))
-
-# Filtrado dinámico del DataFrame
-dff = df.copy()
-if grupos:
-    dff = dff[dff["grupo"].isin(grupos)]
-if vehiculos:
-    dff = dff[dff["nombre_dispositivo"].isin(vehiculos)]
-if tipos and "tipo_vehiculo" in dff.columns:
-    dff = dff[dff["tipo_vehiculo"].isin(tipos)]
-if
+head_col1, head_col2 = st.columns(
