@@ -76,20 +76,11 @@ def cargar_datos():
         0
     )
 
-    # -----------------------------------------------------------------
-    # FILTRADO DE INACTIVOS Y VALORES EN BLANCO (DENTRO DEL CACHÉ)
-    # -----------------------------------------------------------------
+    # FILTRADO DE INACTIVOS Y VALORES EN BLANCO
     if "grupo" in df.columns:
-        # 1. Eliminar filas donde el grupo sea completamente nulo (NaN)
         df = df[df["grupo"].notna()]
-        
-        # 2. Limpiar espacios extras alrededor del texto
         df["grupo"] = df["grupo"].astype(str).str.strip()
-        
-        # 3. Quitar los que quedaron vacíos o "en blanco" ("")
         df = df[df["grupo"] != ""]
-        
-        # 4. Quitar los que contengan la palabra "inac" (Inactivos)
         df = df[~df["grupo"].str.lower().str.contains("inac", na=False)]
 
     return df
@@ -98,7 +89,6 @@ def cargar_datos():
 # Carga de datos limpios
 df = cargar_datos()
 
-# Control de seguridad si el dataframe queda vacío tras los filtros
 if df.empty:
     st.warning("No se encontraron datos disponibles o válidos en la API.")
     st.stop()
@@ -134,7 +124,7 @@ dff = df.copy()
 if grupos:
     dff = dff[dff["grupo"].isin(grupos)]
 
-if vehiculos:
+if Math_filter := vehiculos:
     dff = dff[dff["nombre_dispositivo"].isin(vehiculos)]
 
 if len(rango) == 2:
@@ -172,9 +162,14 @@ if not dff.empty:
         grupo_df = grupo_df.sort_values("%ralenti", ascending=True)
 
         fig = px.bar(
-            grupo_df, x="%ralenti", y="grupo", orientation="h",
-            title="% Ralentí por Grupo", labels={"%ralenti": "% Ralentí", "grupo": "Grupo"},
-            color_discrete_sequence=[COLOR_VERDE], text="%ralenti"
+            grupo_df, 
+            x="%ralenti", 
+            y="grupo", 
+            orientation="h",
+            title="% Ralentí por Grupo",
+            labels={"%ralenti": "% Ralentí", "grupo": "Grupo"},
+            color_discrete_sequence=[COLOR_VERDE], 
+            text="%ralenti"
         )
         fig.update_traces(texttemplate='%{text:.0f}%', textposition='outside')
         fig.add_vline(x=META_RALENTI, line_dash="dash", line_color="red", annotation_text="Meta")
@@ -186,5 +181,42 @@ if not dff.empty:
         tipo_df = tipo_df.sort_values("%ralenti", ascending=True)
 
         fig = px.bar(
-            tipo_df, x="%ralenti", y="tipo_vehiculo", orientation="h",
-            title="% Ralentí por Tipo", labels={"%ralenti": "% Ral
+            tipo_df, 
+            x="%ralenti", 
+            y="tipo_vehiculo", 
+            orientation="h",
+            title="% Ralentí por Tipo", 
+            labels={"%ralenti": "% Ralentí", "tipo_vehiculo": "Tipo"},
+            color_discrete_sequence=[COLOR_VERDE], 
+            text="%ralenti"
+        )
+        fig.update_traces(texttemplate='%{text:.0f}%', textposition='outside')
+        fig.add_vline(x=META_RALENTI, line_dash="dash", line_color="red", annotation_text="Meta")
+        st.plotly_chart(fig, use_container_width=True)
+
+    # =====================================================
+    # TOP 5
+    # =====================================================
+
+    top = dff.groupby("nombre_dispositivo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
+    top["%ralenti"] = np.where(top["encendido_seg"] > 0, (top["ralenti_seg"] / top["encendido_seg"]) * 100, 0)
+    top = top.sort_values("%ralenti", ascending=False).head(5)
+
+    st.subheader("TOP 5 VEHÍCULOS CON MAYOR % RALENTÍ")
+    st.dataframe(top, use_container_width=True, hide_index=True)
+
+    # =====================================================
+    # EVOLUCIÓN
+    # =====================================================
+
+    evo = dff.groupby("fecha").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
+    evo["%ralenti"] = np.where(evo["encendido_seg"] > 0, (evo["ralenti_seg"] / evo["encendido_seg"]) * 100, 0)
+
+    fig = px.line(
+        evo, x="fecha", y="%ralenti", markers=True,
+        title="EVOLUCIÓN DEL % RALENTÍ", labels={"%ralenti": "% Ralentí", "fecha": "Fecha"}
+    )
+    fig.add_hline(y=META_RALENTI, line_dash="dash", line_color="red", annotation_text="Meta Max")
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.info("No hay datos disponibles para los filtros seleccionados.")
