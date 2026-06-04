@@ -117,16 +117,21 @@ if df.empty:
     st.stop()
 
 # =====================================================
-# ENCABEZADO PRINCIPAL
+# ENCABEZADO PRINCIPAL CON IMAGEN DE TRACTOCAMIÓN
 # =====================================================
 head_col1, head_col2 = st.columns([7, 3])
 with head_col1:
     st.title("TABLERO DE GESTIÓN – RALENTÍ")
     st.markdown("<p style='color:#555; margin-top:-15px; font-size:15px;'>Monitoree y análisis integral para una operación eficiente y segura</p>", unsafe_allow_html=True)
+
 with head_col2:
-    st.markdown("""
-        <div style="text-align: right; margin-top: 15px; font-family: sans-serif; font-size: 13px; color: #333;">
-            <span style="font-weight: bold; color: #2c3e50;">👤 MARIANA PORTAL</span> &nbsp;|&nbsp; 🔔 <span style="background-color:red; color:white; border-radius:50%; padding:2px 6px; font-size:10px;">23</span>
+    # URL pública de una imagen de tractocamión en alta definición
+    url_tractocamion = "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=400&auto=format&fit=crop&q=80"
+    
+    # Contenedor HTML para darle esquinas redondeadas y alineación perfecta
+    st.markdown(f"""
+        <div style="text-align: right; margin-top: 5px;">
+            <img src="{url_tractocamion}" style="width: 100%; max-width: 260px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); border: 1px solid #e1e8ed;">
         </div>
     """, unsafe_allow_html=True)
 
@@ -161,7 +166,7 @@ if len(rango) == 2:
     dff = dff[(dff["fecha"] >= pd.Timestamp(rango[0])) & (dff["fecha"] <= pd.Timestamp(rango[1]))]
 
 # =====================================================
-# RENDIMIENTO DE KPIS (CÁLCULOS PASO A PASO ANTI-TRUNCADO)
+# RENDIMIENTO DE KPIS (TARJETAS SUPERIORES)
 # =====================================================
 kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
 
@@ -182,7 +187,6 @@ if not dff.empty:
         
     vehiculos_total = dff["nombre_dispositivo"].nunique()
     
-    # Conteo de vehículos fuera de meta
     promedios_vehiculo = dff.groupby("nombre_dispositivo")["porcentaje_ralenti"].mean()
     fuera_meta = int((promedios_vehiculo > META_RALENTI).sum())
     
