@@ -35,6 +35,7 @@ st.markdown("""
             box-shadow: 0 2px 6px rgba(0,0,0,0.04);
             min-height: 340px;
             font-family: sans-serif;
+            margin-bottom: 20px;
         }
         .footer-link {
             font-size: 13px; font-weight: 600; color: #1e7e34; text-decoration: none; display: inline-block; margin-top: 15px;
@@ -170,7 +171,7 @@ if len(rango) == 2:
     dff = dff[(dff["fecha"] >= pd.Timestamp(rango[0])) & (dff["fecha"] <= pd.Timestamp(rango[1]))]
 
 # =====================================================
-# DETECCIÓN DE DATOS Y RENDERIZADO SEGURO
+# RENDIMIENTO DEL TABLERO (CON EMPAQUETADO SEGURO)
 # =====================================================
 if not dff.empty:
     
@@ -188,7 +189,7 @@ if not dff.empty:
     pp_diff = round(ralenti_actual - anterior_pct, 2)
     pp_str = f"+{pp_diff} p.p." if pp_diff >= 0 else f"{pp_diff} p.p."
 
-    # --- RENDERIZADO DE TARJETA DE KPIS ---
+    # --- TARJETAS DE KPIS SUPERIORES ---
     kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
 
     with kpi_col1:
@@ -247,15 +248,17 @@ if not dff.empty:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- FILA CENTRAL: SECCIONES ANALÍTICAS ---
+    # --- FILA CENTRAL (EMPAQUETADO EN UN SOLO ST.MARKDOWN PARA EVITAR CUADROS VACÍOS) ---
     mid_col1, mid_col2, mid_col3 = st.columns([1, 1, 1.2])
 
+    # 1. Columna Grupo
     with mid_col1:
-        st.markdown("<div class='section-box'>", unsafe_allow_html=True)
-        st.markdown("<div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:15px;'>% RALENTÍ POR GRUPO ℹ️</div>", unsafe_allow_html=True)
         grupo_df = dff.groupby("grupo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
         grupo_df["%ralenti"] = np.where(grupo_df["encendido_seg"] > 0, (grupo_df["ralenti_seg"] / grupo_df["encendido_seg"]) * 100, 0)
         grupo_df = grupo_df.sort_values("%ralenti", ascending=False)
+        
+        html_grupo = """<div class='section-box'>
+        <div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:15px;'>% RALENTÍ POR GRUPO ℹ️</div>"""
         
         for _, row in grupo_df.head(4).iterrows():
             pct = round(row["%ralenti"], 1)
@@ -263,7 +266,8 @@ if not dff.empty:
             dev_str = f"+{dev_val} p.p." if dev_val >= 0 else f"{dev_val} p.p."
             dev_color = "#d93025" if dev_val > 0 else "#1e7e34"
             bar_color = "#e67e22" if pct > META_RALENTI else "#2ecc71"
-            st.markdown(f"""
+            
+            html_grupo += f"""
                 <div style="margin-bottom: 11px; font-size:13px;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:3px; font-weight:600;">
                         <span style="color:#333;">{row['grupo']}</span>
@@ -272,13 +276,15 @@ if not dff.empty:
                     <div style="background-color:#edf2f7; border-radius:4px; height:8px; width:100%;">
                         <div style="background-color:{bar_color}; width:{min(pct, 100)}%; height:8px; border-radius:4px;"></div>
                     </div>
-                </div>
-            """, unsafe_allow_html=True)
-        st.markdown("<a href='#' class='footer-link'>Ver detalle por grupo ></a></div>", unsafe_allow_html=True)
+                </div>"""
+        html_grupo += "<a href='#' class='footer-link'>Ver detalle por grupo ></a></div>"
+        st.markdown(html_grupo, unsafe_allow_html=True)
 
+    # 2. Columna Tipo de Vehículo
     with mid_col2:
-        st.markdown("<div class='section-box'>", unsafe_allow_html=True)
-        st.markdown("<div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:15px;'>% RALENTÍ POR TIPO DE VEHÍCULO ℹ️</div>", unsafe_allow_html=True)
+        html_tipo = """<div class='section-box'>
+        <div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:15px;'>% RALENTÍ POR TIPO DE VEHÍCULO ℹ️</div>"""
+        
         if "tipo_vehiculo" in dff.columns and not dff["tipo_vehiculo"].isna().all():
             tipo_df = dff.groupby("tipo_vehiculo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
             tipo_df["%ralenti"] = np.where(tipo_df["encendido_seg"] > 0, (tipo_df["ralenti_seg"] / tipo_df["encendido_seg"]) * 100, 0)
@@ -290,7 +296,8 @@ if not dff.empty:
                 dev_str = f"+{dev_val} p.p." if dev_val >= 0 else f"{dev_val} p.p."
                 dev_color = "#d93025" if dev_val > 0 else "#1e7e34"
                 bar_color = "#1e7e34" if pct <= META_RALENTI else "#e67e22"
-                st.markdown(f"""
+                
+                html_tipo += f"""
                     <div style="margin-bottom: 11px; font-size:13px;">
                         <div style="display:flex; justify-content:space-between; margin-bottom:3px; font-weight:600;">
                             <span style="color:#333;">{row['tipo_vehiculo']}</span>
@@ -299,15 +306,15 @@ if not dff.empty:
                         <div style="background-color:#edf2f7; border-radius:4px; height:8px; width:100%;">
                             <div style="background-color:{bar_color}; width:{min(pct, 100)}%; height:8px; border-radius:4px;"></div>
                         </div>
-                    </div>
-                """, unsafe_allow_html=True)
+                    </div>"""
         else:
-            st.markdown("<p style='color:#777; font-size:13px; padding-top:10px;'>No hay datos de tipo de vehículo disponibles.</p>", unsafe_allow_html=True)
-        st.markdown("<a href='#' class='footer-link'>Ver detalle por tipo de vehículo ></a></div>", unsafe_allow_html=True)
+            html_tipo += "<p style='color:#777; font-size:13px; padding-top:10px;'>No hay datos de tipo de vehículo disponibles.</p>"
+            
+        html_tipo += "<a href='#' class='footer-link'>Ver detalle por tipo de vehículo ></a></div>"
+        st.markdown(html_tipo, unsafe_allow_html=True)
 
+    # 3. Columna Top 5 Ranking Tabla
     with mid_col3:
-        st.markdown("<div class='section-box'>", unsafe_allow_html=True)
-        st.markdown("<div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:10px;'>TOP 5 (POR % RALENTÍ)</div>", unsafe_allow_html=True)
         top = dff.groupby("nombre_dispositivo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
         top["%ralenti"] = np.where(top["encendido_seg"] > 0, (top["ralenti_seg"] / top["encendido_seg"]) * 100, 0)
         top["Horas Ralentí"] = round(top["ralenti_seg"] / 3600, 1)
@@ -316,21 +323,23 @@ if not dff.empty:
         top["Eventos"] = top["nombre_dispositivo"].map(eventos_map)
         top = top.sort_values("%ralenti", ascending=False).head(5)
         
-        tabla_html = """<table style='width:100%; border-collapse: collapse; font-size:12px; text-align:left;'>
+        html_top = """<div class='section-box'>
+        <div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:10px;'>TOP 5 (POR % RALENTÍ)</div>
+        <table style='width:100%; border-collapse: collapse; font-size:12px; text-align:left;'>
             <tr style='border-bottom: 2px solid #edf2f7; color:#555; font-weight:bold;'>
                 <th style='padding:6px;'>#</th><th style='padding:6px;'>Placa</th>
                 <th style='padding:6px;'>% Ralentí</th><th style='padding:6px;'>Horas en Ralentí</th>
                 <th style='padding:6px;'>Horas Operativas</th><th style='padding:6px;'>Eventos</th>
             </tr>"""
+            
         for idx, (_, row) in enumerate(top.iterrows(), 1):
-            tabla_html += f"""<tr style='border-bottom: 1px solid #edf2f7; font-weight:600; color:#333;'>
+            html_top += f"""<tr style='border-bottom: 1px solid #edf2f7; font-weight:600; color:#333;'>
                 <td style='padding:7px;'>{idx}</td><td style='padding:7px; color:#1e7e34;'>{row['nombre_dispositivo']}</td>
                 <td style='padding:7px; color:#d93025;'>{round(row['%ralenti'], 1)}%</td><td style='padding:7px;'>{row['Horas Ralentí']} h</td>
                 <td style='padding:7px;'>{row['Horas Operativas']} h</td><td style='padding:7px;'>{row['Eventos']}</td>
             </tr>"""
-        tabla_html += "</table>"
-        st.markdown(tabla_html, unsafe_allow_html=True)
-        st.markdown("<a href='#' class='footer-link'>Ver top completo ></a></div>", unsafe_allow_html=True)
+        html_top += "</table><a href='#' class='footer-link'>Ver top completo ></a></div>"
+        st.markdown(html_top, unsafe_allow_html=True)
 
     # --- EVOLUCIÓN GRÁFICA INFERIOR ---
     st.markdown("<br>", unsafe_allow_html=True)
