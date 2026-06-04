@@ -122,8 +122,6 @@ with head_col1:
     st.title("TABLERO DE GESTIÓN – RALENTÍ")
 
 with head_col2:
-    # URL representativa de un camión de reparto comercial urbano.
-    # Puedes cambiar este link por la foto real de los camiones de Huevos Kikes si la tienes.
     url_vehiculo_kikes = "https://images.unsplash.com/photo-1516574187841-cb9cc2ca948b?w=400&auto=format&fit=crop&q=80"
     st.markdown(f"""
         <div style="text-align: right; margin-top: 5px;">
@@ -234,4 +232,134 @@ if not dff.empty:
                 </svg>
                 <div style="text-align: left;">
                     <div style="font-size: 34px; font-weight: 800; color: #d93025; line-height: 1;">{pp_str}</div>
-                    <div style="font-size: 11px; font-weight
+                    <div style="font-size: 11px; font-weight: 700; color: #555; letter-spacing: 0.3px;">VS. MES ANTERIOR</div>
+                </div>
+            </div>
+            <hr style="margin: 15px 0 10px 0; border: 0; border-top: 1px solid #eee;">
+            <div style="display: flex; justify-content: space-around; font-size: 13px; font-weight: 600; color: #333;">
+                <div>Anterior: <span style="font-weight:800;">{anterior_pct}%</span></div>
+                <div>Actual: <span style="font-weight:800; color:#d93025;">{ralenti_actual}%</span></div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # --- FILA CENTRAL ---
+    mid_col1, mid_col2, mid_col3 = st.columns([1, 1, 1.2])
+
+    # 1. Columna Grupo
+    with mid_col1:
+        g_df = dff.groupby("grupo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
+        g_df["%ralenti"] = np.where(g_df["encendido_seg"] > 0, (g_df["ralenti_seg"] / g_df["encendido_seg"]) * 100, 0)
+        grupo_df = g_df.sort_values("%ralenti", ascending=False)
+        
+        html_grupo = "<div class='section-box'><div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:15px;'>% RALENTÍ POR GRUPO ℹ️</div>"
+        for _, row in grupo_df.head(4).iterrows():
+            pct = round(row["%ralenti"], 1)
+            dev_val = round(pct - META_RALENTI, 1)
+            dev_str = f"+{dev_val} p.p." if dev_val >= 0 else f"{dev_val} p.p."
+            dev_color = "#d93025" if dev_val > 0 else "#1e7e34"
+            bar_color = "#e67e22" if pct > META_RALENTI else "#2ecc71"
+            html_grupo += f"""
+                <div style="margin-bottom: 11px; font-size:13px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:3px; font-weight:600;">
+                        <span style="color:#333;">{row['grupo']}</span>
+                        <span style="color:#111;">{pct}% <span style="color:{dev_color}; font-size:11px; margin-left:5px;">{dev_str}</span></span>
+                    </div>
+                    <div style="background-color:#edf2f7; border-radius:4px; height:8px; width:100%;">
+                        <div style="background-color:{bar_color}; width:{min(pct, 100)}%; height:8px; border-radius:4px;"></div>
+                    </div>
+                </div>"""
+        html_grupo += "</div>"
+        st.markdown(html_grupo, unsafe_allow_html=True)
+
+    # 2. Columna Tipo de Vehículo
+    with mid_col2:
+        html_tipo = "<div class='section-box'><div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:15px;'>% RALENTÍ POR TIPO DE VEHÍCULO ℹ️</div>"
+        if "tipo_vehiculo" in dff.columns and not dff["tipo_vehiculo"].isna().all():
+            t_df = dff.groupby("tipo_vehiculo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
+            t_df["%ralenti"] = np.where(t_df["encendido_seg"] > 0, (t_df["ralenti_seg"] / t_df["encendido_seg"]) * 100, 0)
+            tipo_df = t_df.sort_values("%ralenti", ascending=False)
+            for _, row in tipo_df.head(4).iterrows():
+                pct = round(row["%ralenti"], 1)
+                dev_val = round(pct - META_RALENTI, 1)
+                dev_str = f"+{dev_val} p.p." if dev_val >= 0 else f"{dev_val} p.p."
+                dev_color = "#d93025" if dev_val > 0 else "#1e7e34"
+                bar_color = "#1e7e34" if pct <= META_RALENTI else "#e67e22"
+                html_tipo += f"""
+                    <div style="margin-bottom: 11px; font-size:13px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:3px; font-weight:600;">
+                            <span style="color:#333;">{row['tipo_vehiculo']}</span>
+                            <span style="color:#111;">{pct}% <span style="color:{dev_color}; font-size:11px; margin-left:5px;">{dev_str}</span></span>
+                        </div>
+                        <div style="background-color:#edf2f7; border-radius:4px; height:8px; width:100%;">
+                            <div style="background-color:{bar_color}; width:{min(pct, 100)}%; height:8px; border-radius:4px;"></div>
+                        </div>
+                    </div>"""
+        else:
+            html_tipo += "<p style='color:#777; font-size:13px; padding-top:10px;'>No hay datos de tipo de vehículo disponibles.</p>"
+        html_tipo += "</div>"
+        st.markdown(html_tipo, unsafe_allow_html=True)
+
+    # 3. Columna Ranking Tabla
+    with mid_col3:
+        top_df = dff.groupby("nombre_dispositivo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
+        top = top_df.copy()
+        top["%ralenti"] = np.where(top["encendido_seg"] > 0, (top["ralenti_seg"] / top["encendido_seg"]) * 100, 0)
+        top["Horas Ralentí"] = round(top["ralenti_seg"] / 3600, 1)
+        top["Horas Operativas"] = round(top["encendido_seg"] / 3600, 1)
+        eventos_map = dff.groupby("nombre_dispositivo").size().to_dict()
+        top["Eventos"] = top["nombre_dispositivo"].map(eventos_map)
+        top = top.sort_values("%ralenti", ascending=False).head(5)
+        
+        html_top = """<div class='section-box'>
+        <div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:10px;'>TOP 5 (POR % RALENTÍ)</div>
+        <table style='width:100%; border-collapse: collapse; font-size:12px; text-align:left;'>
+            <tr style='border-bottom: 2px solid #edf2f7; color:#555; font-weight:bold;'>
+                <th style='padding:6px;'>#</th><th style='padding:6px;'>Placa</th>
+                <th style='padding:6px;'>% Ralentí</th><th style='padding:6px;'>Horas en Ralentí</th>
+                <th style='padding:6px;'>Horas Operativas</th><th style='padding:6px;'>Eventos</th>
+            </tr>"""
+        for idx, (_, row) in enumerate(top.iterrows(), 1):
+            html_top += f"""<tr style='border-bottom: 1px solid #edf2f7; font-weight:600; color:#333;'>
+                <td style='padding:7px;'>{idx}</td><td style='padding:7px; color:#1e7e34;'>{row['nombre_dispositivo']}</td>
+                <td style='padding:7px; color:#d93025;'>{round(row['%ralenti'], 1)}%</td><td style='padding:7px;'>{row['Horas Ralentí']} h</td>
+                <td style='padding:7px;'>{row['Horas Operativas']} h</td><td style='padding:7px;'>{row['Eventos']}</td>
+            </tr>"""
+        html_top += "</table></div>"
+        st.markdown(html_top, unsafe_allow_html=True)
+
+    # --- EVOLUCIÓN GRÁFICA INFERIOR ---
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    ultima_fecha = dff["fecha"].max()
+    ultimo_mes = ultima_fecha.month
+    ultimo_ano = ultima_fecha.year
+    nombre_mes_ano = ultima_fecha.strftime('%m/%Y')
+    
+    st.markdown(f"<div style='font-size:14px; font-weight:bold; color:#111; margin-left:5px; margin-bottom:5px;'>EVOLUCIÓN DEL % RALENTÍ (ÚLTIMO MES DISPONIBLE: {nombre_mes_ano}) ℹ️</div>", unsafe_allow_html=True)
+    
+    dff_ultimo_mes = dff[(dff["fecha"].dt.month == ultimo_mes) & (dff["fecha"].dt.year == ultimo_ano)]
+
+    if not dff_ultimo_mes.empty:
+        evo = dff_ultimo_mes.groupby("fecha").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
+        evo["%ralenti"] = np.where(evo["encendido_seg"] > 0, (evo["ralenti_seg"] / evo["encendido_seg"]) * 100, 0)
+        evo["%ralenti"] = round(evo["%ralenti"], 1)
+        evo["fecha_str"] = evo["fecha"].dt.strftime('%d/%m')
+
+        fig = px.line(evo, x="fecha_str", y="%ralenti", markers=True, text="%ralenti")
+        fig.update_traces(line_color="#1e7e34", line_width=2.5, marker=dict(size=7, color="#1e7e34"), textposition="top center", texttemplate="%{text}%")
+        fig.add_hline(y=META_RALENTI, line_dash="dash", line_color="#e67e22", line_width=1.5)
+        fig.update_layout(
+            xaxis_title="", yaxis_title="", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+            margin=dict(l=10, r=10, t=25, b=10), height=260,
+            yaxis=dict(showgrid=True, gridcolor='#f0f0f0', range=[0, max(evo["%ralenti"].max() + 5, 20)])
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("No se registran datos para graficar en el rango seleccionado.")
+
+else:
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.info("⚠️ No hay datos disponibles para los filtros seleccionados. Intenta cambiar el rango de fechas o los filtros.")
