@@ -12,13 +12,37 @@ st.set_page_config(
     layout="wide"
 )
 
-# Inyección de estilos CSS globales de forma lineal y segura
+# Inyección de estilos CSS globales (Líneas mini)
 css = "<style>"
-css += "div[data-testid='stBlock'] { padding: 0px; }"
-css += ".reportview-container .main .block-container { padding-top: 1rem; }"
-css += "h1 { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 800 !important; color: #0a192f !important; }"
-css += ".card-box { background-color: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #e1e8ed; box-shadow: 0 2px 6px rgba(0,0,0,0.04); height: 190px; font-family: sans-serif; }"
-css += ".section-box { background-color: #ffffff; padding: 22px; border-radius: 10px; border: 1px solid #e1e8ed; box-shadow: 0 2px 6px rgba(0,0,0,0.04); min-height: 340px; font-family: sans-serif; margin-bottom: 20px; }"
+css += "div[data-testid='stBlock']"
+css += " { padding: 0px; }"
+css += ".reportview-container .main "
+css += ".block-container "
+css += "{ padding-top: 1rem; }"
+css += "h1 { font-family: "
+css += "'Helvetica Neue', Helvetica, "
+css += "Arial, sans-serif; "
+css += "font-weight: 800 !important; "
+css += "color: #0a192f !important; }"
+css += ".card-box { "
+css += "background-color: #ffffff; "
+css += "padding: 20px; "
+css += "border-radius: 10px; "
+css += "border: 1px solid #e1e8ed; "
+css += "box-shadow: 0 2px 6px "
+css += "rgba(0,0,0,0.04); "
+css += "height: 190px; "
+css += "font-family: sans-serif; }"
+css += ".section-box { "
+css += "background-color: #ffffff; "
+css += "padding: 22px; "
+css += "border-radius: 10px; "
+css += "border: 1px solid #e1e8ed; "
+css += "box-shadow: 0 2px 6px "
+css += "rgba(0,0,0,0.04); "
+css += "min-height: 340px; "
+css += "font-family: sans-serif; "
+css += "margin-bottom: 20px; }"
 css += "</style>"
 st.markdown(css, unsafe_allow_html=True)
 
@@ -102,7 +126,7 @@ if df.empty:
 st.title("TABLERO DE GESTIÓN – RALENTÍ")
 
 # =====================================================
-# FILTROS (5 COLUMNAS EQUILIBRADAS)
+# FILTROS
 # =====================================================
 fil_col1, fil_col2, fil_col3, fil_col4, fil_col5 = st.columns([1.8, 1.8, 1.8, 1.8, 2.8])
 
@@ -194,42 +218,4 @@ if not dff.empty:
         html_kpi3 += "<svg width='38' height='38' viewBox='0 0 24 24' fill='none' stroke='#1e7e34' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'>"
         html_kpi3 += "<polyline points='23 6 13.5 15.5 8.5 10.5 1 18'></polyline><polyline points='17 6 23 6 23 12'></polyline></svg>"
         html_kpi3 += "<div style='text-align: left;'>"
-        html_kpi3 += "<div style='font-size: 34px; font-weight: 800; color: #d93025; line-height: 1;'>" + pp_str + "</div>"
-        html_kpi3 += "<div style='font-size: 11px; font-weight: 700; color: #555; letter-spacing: 0.3px;'>VS. MES ANTERIOR</div>"
-        html_kpi3 += "</div></div><hr style='margin: 15px 0 10px 0; border: 0; border-top: 1px solid #eee;'>"
-        html_kpi3 += "<div style='display: flex; justify-content: space-around; font-size: 13px; font-weight: 600; color: #333;'>"
-        html_kpi3 += "<div>Anterior: <span style='font-weight:800;'>" + str(anterior_pct) + "%</span></div>"
-        html_kpi3 += "<div>Actual: <span style='font-weight:800; color:#d93025;'>" + str(ralenti_actual) + "%</span></div>"
-        html_kpi3 += "</div></div>"
-        st.markdown(html_kpi3, unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # --- FILA CENTRAL ---
-    mid_col1, mid_col2, mid_col3 = st.columns([1, 1, 1.2])
-
-    # 1. Columna Grupo
-    with mid_col1:
-        g_df = dff.groupby("grupo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
-        g_df["%ralenti"] = np.where(g_df["encendido_seg"] > 0, (g_df["ralenti_seg"] / g_df["encendido_seg"]) * 100, 0)
-        grupo_df = g_df.sort_values("%ralenti", ascending=False)
-        
-        html_grupo = "<div class='section-box'><div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:15px;'>% RALENTÍ POR GRUPO ℹ️</div>"
-        for _, row in grupo_df.head(4).iterrows():
-            pct = round(row["%ralenti"], 1)
-            dev_val = round(pct - META_RALENTI, 1)
-            dev_str = "+" + str(dev_val) + " p.p." if dev_val >= 0 else str(dev_val) + " p.p."
-            dev_color = "#d93025" if dev_val > 0 else "#1e7e34"
-            bar_color = "#e67e22" if pct > META_RALENTI else "#2ecc71"
-            html_grupo += "<div style='margin-bottom: 11px; font-size:13px;'>"
-            html_grupo += "<div style='display:flex; justify-content:space-between; margin-bottom:3px; font-weight:600;'>"
-            html_grupo += "<span style='color:#333;'>" + str(row['grupo']) + "</span>"
-            html_grupo += "<span style='color:#111;'>" + str(pct) + "% <span style='color:" + dev_color + "; font-size:11px; margin-left:5px;'>" + dev_str + "</span></span></div>"
-            html_grupo += "<div style='background-color:#edf2f7; border-radius:4px; height:8px; width:100%;'>"
-            html_grupo += "<div style='background-color:" + bar_color + "; width:" + str(min(pct, 100)) + "%; height:8px; border-radius:4px;'></div></div></div>"
-        html_grupo += "</div>"
-        st.markdown(html_grupo, unsafe_allow_html=True)
-
-    # 2. Columna Tipo de Vehículo
-    with mid_col2:
-        html_tipo = "<div class='section-box'><div style='font-size:14px; font-weight:bold; color
+        html_kpi3 += "<div style='font-size:
