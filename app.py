@@ -125,10 +125,7 @@ with head_col1:
     st.markdown("<p style='color:#555; margin-top:-15px; font-size:15px;'>Monitoree y análisis integral para una operación eficiente y segura</p>", unsafe_allow_html=True)
 
 with head_col2:
-    # URL pública de una imagen de tractocamión en alta definición
     url_tractocamion = "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=400&auto=format&fit=crop&q=80"
-    
-    # Contenedor HTML para darle esquinas redondeadas y alineación perfecta
     st.markdown(f"""
         <div style="text-align: right; margin-top: 5px;">
             <img src="{url_tractocamion}" style="width: 100%; max-width: 260px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); border: 1px solid #e1e8ed;">
@@ -136,9 +133,9 @@ with head_col2:
     """, unsafe_allow_html=True)
 
 # =====================================================
-# FILTROS
+# FILTROS (REORGANIZADOS A 6 COLUMNAS)
 # =====================================================
-fil_col1, fil_col2, fil_col3, fil_col4, fil_col5 = st.columns([2, 2, 2, 3, 1])
+fil_col1, fil_col2, fil_col3, fil_col4, fil_col5, fil_col6 = st.columns([1.5, 1.5, 1.5, 1.5, 2.5, 1])
 
 with fil_col1:
     grupos = st.multiselect("Grupo", sorted(df["grupo"].unique()), placeholder="Todas")
@@ -147,9 +144,25 @@ with fil_col2:
 with fil_col3:
     tipos_v = sorted(df["tipo_vehiculo"].dropna().unique()) if "tipo_vehiculo" in df.columns else []
     tipos = st.multiselect("Tipo de vehículo", tipos_v, placeholder="Todas")
+
+# --- NUEVO FILTRO: COMBUSTIBLE ---
 with fil_col4:
-    rango = st.date_input("Periodo", (df["fecha"].min(), df["fecha"].max()))
+    # Verificación preventiva del nombre de columna de combustible en tu API
+    combustibles_v = []
+    col_combustible_activa = None
+    
+    if "combustible" in df.columns:
+        combustibles_v = sorted(df["combustible"].dropna().unique())
+        col_combustible_activa = "combustible"
+    elif "tipo_combustible" in df.columns:
+        combustibles_v = sorted(df["tipo_combustible"].dropna().unique())
+        col_combustible_activa = "tipo_combustible"
+        
+    combustibles = st.multiselect("Combustible", combustibles_v, placeholder="Todas")
+
 with fil_col5:
+    rango = st.date_input("Periodo", (df["fecha"].min(), df["fecha"].max()))
+with fil_col6:
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🗑️ Limpiar"):
         st.rerun()
@@ -162,6 +175,11 @@ if vehiculos:
     dff = dff[dff["nombre_dispositivo"].isin(vehiculos)]
 if tipos and "tipo_vehiculo" in dff.columns:
     dff = dff[dff["tipo_vehiculo"].isin(tipos)]
+    
+# Aplicar filtro de combustible de forma segura según la columna detectada
+if combustibles and col_combustible_activa:
+    dff = dff[dff[col_combustible_activa].isin(combustibles)]
+    
 if len(rango) == 2:
     dff = dff[(dff["fecha"] >= pd.Timestamp(rango[0])) & (dff["fecha"] <= pd.Timestamp(rango[1]))]
 
@@ -170,7 +188,6 @@ if len(rango) == 2:
 # =====================================================
 kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
 
-# Inicialización por defecto de variables
 ralenti_actual = 0.0
 vehiculos_total = 0
 fuera_meta = 0
