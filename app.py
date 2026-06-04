@@ -91,14 +91,15 @@ def cargar_datos():
 df = cargar_datos()
 
 # =====================================================
-# FILTRADO DE GRUPOS INACTIVOS
+# ELIMINAR GRUPOS INACTIVOS (MODIFICACIÓN)
 # =====================================================
 if not df.empty and "grupo" in df.columns:
+    # Filtra y elimina "inactivos" ignorando si viene en mayúsculas o minúsculas
     df = df[df["grupo"].str.lower().fillna("") != "inactivos"]
 
-# Control por si la API no devuelve registros al iniciar
+# Control de seguridad si el dataframe queda vacío
 if df.empty:
-    st.warning("No se encontraron datos disponibles en la API.")
+    st.warning("No se encontraron datos disponibles o válidos en la API.")
     st.stop()
 
 # =====================================================
