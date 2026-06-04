@@ -12,33 +12,15 @@ st.set_page_config(
     layout="wide"
 )
 
-# Inyección de estilos CSS globales
-st.markdown("""
-    <style>
-        div[data-testid="stBlock"] { padding: 0px; }
-        .reportview-container .main .block-container { padding-top: 1rem; }
-        h1 { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 800 !important; color: #0a192f !important; }
-        .card-box {
-            background-color: #ffffff; 
-            padding: 20px; 
-            border-radius: 10px; 
-            border: 1px solid #e1e8ed; 
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-            height: 190px;
-            font-family: sans-serif;
-        }
-        .section-box {
-            background-color: #ffffff; 
-            padding: 22px; 
-            border-radius: 10px; 
-            border: 1px solid #e1e8ed; 
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-            min-height: 340px;
-            font-family: sans-serif;
-            margin-bottom: 20px;
-        }
-    </style>
-""", unsafe_allow_html=True)
+# Inyección de estilos CSS globales de forma lineal y segura
+css = "<style>"
+css += "div[data-testid='stBlock'] { padding: 0px; }"
+css += ".reportview-container .main .block-container { padding-top: 1rem; }"
+css += "h1 { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 800 !important; color: #0a192f !important; }"
+css += ".card-box { background-color: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #e1e8ed; box-shadow: 0 2px 6px rgba(0,0,0,0.04); height: 190px; font-family: sans-serif; }"
+css += ".section-box { background-color: #ffffff; padding: 22px; border-radius: 10px; border: 1px solid #e1e8ed; box-shadow: 0 2px 6px rgba(0,0,0,0.04); min-height: 340px; font-family: sans-serif; margin-bottom: 20px; }"
+css += "</style>"
+st.markdown(css, unsafe_allow_html=True)
 
 META_RALENTI = 10
 
@@ -53,7 +35,7 @@ def cargar_datos():
 
     try:
         token_response = requests.post(
-            f"{base_url}/api/obtenerToken",
+            base_url + "/api/obtenerToken",
             json={"usuario": usuario, "clave": clave},
             headers={"Content-Type": "application/json", "accept": "application/json"},
             timeout=10
@@ -64,13 +46,13 @@ def cargar_datos():
             token = token[7:]
 
         response = requests.get(
-            f"{base_url}/api/v2/gps-resumen/vehiculos",
-            headers={"Authorization": f"Bearer {token}", "accept": "application/json"},
+            base_url + "/api/v2/gps-resumen/vehiculos",
+            headers={"Authorization": "Bearer " + token, "accept": "application/json"},
             timeout=15
         )
         data = response.json()
     except Exception as e:
-        st.error(f"Error crítico al conectar con la API: {e}")
+        st.error("Error crítico al conectar con la API: " + str(e))
         return pd.DataFrame()
 
     success = data.get("success")
@@ -115,12 +97,12 @@ if df.empty:
     st.stop()
 
 # =====================================================
-# ENCABEZADO PRINCIPAL (IMAGEN REMOVIDA)
+# ENCABEZADO PRINCIPAL
 # =====================================================
 st.title("TABLERO DE GESTIÓN – RALENTÍ")
 
 # =====================================================
-# FILTROS
+# FILTROS (5 COLUMNAS EQUILIBRADAS)
 # =====================================================
 fil_col1, fil_col2, fil_col3, fil_col4, fil_col5 = st.columns([1.8, 1.8, 1.8, 1.8, 2.8])
 
@@ -177,7 +159,7 @@ if not dff.empty:
     
     anterior_pct = 17.60
     pp_diff = round(ralenti_actual - anterior_pct, 2)
-    pp_str = f"+{pp_diff} p.p." if pp_diff >= 0 else f"{pp_diff} p.p."
+    pp_str = "+" + str(pp_diff) + " p.p." if pp_diff >= 0 else str(pp_diff) + " p.p."
 
     # --- TARJETAS DE KPIS SUPERIORES ---
     kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
@@ -236,4 +218,18 @@ if not dff.empty:
         for _, row in grupo_df.head(4).iterrows():
             pct = round(row["%ralenti"], 1)
             dev_val = round(pct - META_RALENTI, 1)
-            dev_str = f"+{dev_val} p.p." if dev_val >= 0 else f"{dev_val} p.p."
+            dev_str = "+" + str(dev_val) + " p.p." if dev_val >= 0 else str(dev_val) + " p.p."
+            dev_color = "#d93025" if dev_val > 0 else "#1e7e34"
+            bar_color = "#e67e22" if pct > META_RALENTI else "#2ecc71"
+            html_grupo += "<div style='margin-bottom: 11px; font-size:13px;'>"
+            html_grupo += "<div style='display:flex; justify-content:space-between; margin-bottom:3px; font-weight:600;'>"
+            html_grupo += "<span style='color:#333;'>" + str(row['grupo']) + "</span>"
+            html_grupo += "<span style='color:#111;'>" + str(pct) + "% <span style='color:" + dev_color + "; font-size:11px; margin-left:5px;'>" + dev_str + "</span></span></div>"
+            html_grupo += "<div style='background-color:#edf2f7; border-radius:4px; height:8px; width:100%;'>"
+            html_grupo += "<div style='background-color:" + bar_color + "; width:" + str(min(pct, 100)) + "%; height:8px; border-radius:4px;'></div></div></div>"
+        html_grupo += "</div>"
+        st.markdown(html_grupo, unsafe_allow_html=True)
+
+    # 2. Columna Tipo de Vehículo
+    with mid_col2:
+        html_tipo = "<div class='section-box'><div style='font-size:14px; font-weight:bold; color
