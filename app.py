@@ -123,7 +123,6 @@ if df.empty:
 head_col1, head_col2 = st.columns([7, 3])
 with head_col1:
     st.title("TABLERO DE GESTIÓN – RALENTÍ")
-    st.markdown("<p style='color:#555; margin-top:-15px; font-size:15px;'>Monitoree y análisis integral para una operación eficiente y segura</p>", unsafe_allow_html=True)
 
 with head_col2:
     url_tractocamion = "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=400&auto=format&fit=crop&q=80"
@@ -146,7 +145,12 @@ with fil_col3:
     tipos_v = sorted(df["tipo_vehiculo"].dropna().unique()) if "tipo_vehiculo" in df.columns else []
     tipos = st.multiselect("Tipo de vehículo", tipos_v, placeholder="Todas")
 with fil_col4:
-    combustibles_v = sorted(df["combustible"].dropna().unique()) if "combustible" in df.columns else (sorted(df["tipo_combustible"].dropna().unique()) if "tipo_combustible" in df.columns else [])
+    if "combustible" in df.columns:
+        combustibles_v = sorted(df["combustible"].dropna().unique())
+    elif "tipo_combustible" in df.columns:
+        combustibles_v = sorted(df["tipo_combustible"].dropna().unique())
+    else:
+        combustibles_v = []
     combustibles = st.multiselect("Combustible", combustibles_v, placeholder="Todas")
 with fil_col5:
     rango = st.date_input("Periodo", (df["fecha"].min(), df["fecha"].max()))
@@ -251,7 +255,6 @@ if not dff.empty:
     # --- FILA CENTRAL ---
     mid_col1, mid_col2, mid_col3 = st.columns([1, 1, 1.2])
 
-    # 1. Columna Grupo
     with mid_col1:
         grupo_df = dff.groupby("grupo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
         grupo_df["%ralenti"] = np.where(grupo_df["encendido_seg"] > 0, (grupo_df["ralenti_seg"] / grupo_df["encendido_seg"]) * 100, 0)
@@ -280,7 +283,6 @@ if not dff.empty:
         html_grupo += "<a href='#' class='footer-link'>Ver detalle por grupo ></a></div>"
         st.markdown(html_grupo, unsafe_allow_html=True)
 
-    # 2. Columna Tipo de Vehículo
     with mid_col2:
         html_tipo = """<div class='section-box'>
         <div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:15px;'>% RALENTÍ POR TIPO DE VEHÍCULO ℹ️</div>"""
@@ -313,7 +315,6 @@ if not dff.empty:
         html_tipo += "<a href='#' class='footer-link'>Ver detalle por tipo de vehículo ></a></div>"
         st.markdown(html_tipo, unsafe_allow_html=True)
 
-    # 3. Columna Top 5 Ranking Tabla
     with mid_col3:
         top = dff.groupby("nombre_dispositivo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
         top["%ralenti"] = np.where(top["encendido_seg"] > 0, (top["ralenti_seg"] / top["encendido_seg"]) * 100, 0)
@@ -341,10 +342,9 @@ if not dff.empty:
         html_top += "</table><a href='#' class='footer-link'>Ver top completo ></a></div>"
         st.markdown(html_top, unsafe_allow_html=True)
 
-    # --- EVOLUCIÓN GRÁFICA INFERIOR (MODIFICADO: DETECTAR Y MOSTRAR ÚLTIMO MES CON DATOS) ---
+    # --- EVOLUCIÓN GRÁFICA INFERIOR ---
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # 1. Identificamos cuál es la fecha máxima en el dataset filtrado
     ultima_fecha = dff["fecha"].max()
     ultimo_mes = ultima_fecha.month
     ultimo_ano = ultima_fecha.year
@@ -352,7 +352,6 @@ if not dff.empty:
     
     st.markdown(f"<div style='font-size:14px; font-weight:bold; color:#111; margin-left:5px; margin-bottom:5px;'>EVOLUCIÓN DEL % RALENTÍ (ÚLTIMO MES DISPONIBLE: {nombre_mes_ano}) ℹ️</div>", unsafe_allow_html=True)
     
-    # 2. Filtramos el DataFrame para que la gráfica contenga solo los días de ese último mes con datos
     dff_ultimo_mes = dff[(dff["fecha"].dt.month == ultimo_mes) & (dff["fecha"].dt.year == ultimo_ano)]
 
     if not dff_ultimo_mes.empty:
