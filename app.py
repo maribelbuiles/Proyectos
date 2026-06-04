@@ -146,12 +146,7 @@ with fil_col3:
     tipos_v = sorted(df["tipo_vehiculo"].dropna().unique()) if "tipo_vehiculo" in df.columns else []
     tipos = st.multiselect("Tipo de vehículo", tipos_v, placeholder="Todas")
 with fil_col4:
-    if "combustible" in df.columns:
-        combustibles_v = sorted(df["combustible"].dropna().unique())
-    elif "tipo_combustible" in df.columns:
-        combustibles_v = sorted(df["tipo_combustible"].dropna().unique())
-    else:
-        combustibles_v = []
+    combustibles_v = sorted(df["combustible"].dropna().unique()) if "combustible" in df.columns else (sorted(df["tipo_combustible"].dropna().unique()) if "tipo_combustible" in df.columns else [])
     combustibles = st.multiselect("Combustible", combustibles_v, placeholder="Todas")
 with fil_col5:
     rango = st.date_input("Periodo", (df["fecha"].min(), df["fecha"].max()))
@@ -256,6 +251,7 @@ if not dff.empty:
     # --- FILA CENTRAL ---
     mid_col1, mid_col2, mid_col3 = st.columns([1, 1, 1.2])
 
+    # 1. Columna Grupo
     with mid_col1:
         grupo_df = dff.groupby("grupo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
         grupo_df["%ralenti"] = np.where(grupo_df["encendido_seg"] > 0, (grupo_df["ralenti_seg"] / grupo_df["encendido_seg"]) * 100, 0)
@@ -284,6 +280,7 @@ if not dff.empty:
         html_grupo += "<a href='#' class='footer-link'>Ver detalle por grupo ></a></div>"
         st.markdown(html_grupo, unsafe_allow_html=True)
 
+    # 2. Columna Tipo de Vehículo
     with mid_col2:
         html_tipo = """<div class='section-box'>
         <div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:15px;'>% RALENTÍ POR TIPO DE VEHÍCULO ℹ️</div>"""
@@ -316,6 +313,7 @@ if not dff.empty:
         html_tipo += "<a href='#' class='footer-link'>Ver detalle por tipo de vehículo ></a></div>"
         st.markdown(html_tipo, unsafe_allow_html=True)
 
+    # 3. Columna Top 5 Ranking Tabla
     with mid_col3:
         top = dff.groupby("nombre_dispositivo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
         top["%ralenti"] = np.where(top["encendido_seg"] > 0, (top["ralenti_seg"] / top["encendido_seg"]) * 100, 0)
@@ -343,15 +341,22 @@ if not dff.empty:
         html_top += "</table><a href='#' class='footer-link'>Ver top completo ></a></div>"
         st.markdown(html_top, unsafe_allow_html=True)
 
-    # --- EVOLUCIÓN GRÁFICA INFERIOR ---
+    # --- EVOLUCIÓN GRÁFICA INFERIOR (MODIFICADO: DETECTAR Y MOSTRAR ÚLTIMO MES CON DATOS) ---
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("<div style='font-size:14px; font-weight:bold; color:#111; margin-left:5px; margin-bottom:5px;'>EVOLUCIÓN DEL % RALENTÍ (MES ACTUAL) ℹ️</div>", unsafe_allow_html=True)
     
-    ahora = pd.Timestamp.now()
-    dff_mes_actual = dff[(dff["fecha"].dt.month == ahora.month) & (dff["fecha"].dt.year == ahora.year)]
+    # 1. Identificamos cuál es la fecha máxima en el dataset filtrado
+    ultima_fecha = dff["fecha"].max()
+    ultimo_mes = ultima_fecha.month
+    ultimo_ano = ultima_fecha.year
+    nombre_mes_ano = ultima_fecha.strftime('%m/%Y')
+    
+    st.markdown(f"<div style='font-size:14px; font-weight:bold; color:#111; margin-left:5px; margin-bottom:5px;'>EVOLUCIÓN DEL % RALENTÍ (ÚLTIMO MES DISPONIBLE: {nombre_mes_ano}) ℹ️</div>", unsafe_allow_html=True)
+    
+    # 2. Filtramos el DataFrame para que la gráfica contenga solo los días de ese último mes con datos
+    dff_ultimo_mes = dff[(dff["fecha"].dt.month == ultimo_mes) & (dff["fecha"].dt.year == ultimo_ano)]
 
-    if not dff_mes_actual.empty:
-        evo = dff_mes_actual.groupby("fecha").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
+    if not dff_ultimo_mes.empty:
+        evo = dff_ultimo_mes.groupby("fecha").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
         evo["%ralenti"] = np.where(evo["encendido_seg"] > 0, (evo["ralenti_seg"] / evo["encendido_seg"]) * 100, 0)
         evo["%ralenti"] = round(evo["%ralenti"], 1)
         evo["fecha_str"] = evo["fecha"].dt.strftime('%d/%m')
@@ -366,7 +371,7 @@ if not dff.empty:
         )
         st.plotly_chart(fig, use_container_width=True)
     else:
-        st.info("No se registran datos de evolución de ralentí correspondientes al mes en curso.")
+        st.info("No se registran datos para graficar en el rango seleccionado.")
         
     st.markdown("<div style='margin-top:-10px; margin-left:5px;'><a href='#' class='footer-link'>Ver análisis detallado ></a></div>", unsafe_allow_html=True)
 
