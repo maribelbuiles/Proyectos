@@ -124,7 +124,7 @@ dff = df.copy()
 if grupos:
     dff = dff[dff["grupo"].isin(grupos)]
 
-if Math_filter := vehiculos:
+if vehiculos:
     dff = dff[dff["nombre_dispositivo"].isin(vehiculos)]
 
 if len(rango) == 2:
@@ -137,23 +137,64 @@ if len(rango) == 2:
 col1_kpi, col2_kpi, col3_kpi = st.columns(3)
 
 if not dff.empty and dff["encendido_seg"].sum() > 0:
-    ralenti_actual = round(dff["ralenti_seg"].sum() / dff["encendido_seg"].sum() * 100, 2)
+    ralenti_actual = round(dff["ralenti_seg"].sum() / dff["encendido_seg"].sum() * 100, 1)
     vehiculos_total = dff["nombre_dispositivo"].nunique()
     fuera_meta = (dff.groupby("nombre_dispositivo")["porcentaje_ralenti"].mean() > META_RALENTI).sum()
-
-    col1_kpi.metric("% Ralentí Actual", f"{ralenti_actual}%")
-    col2_kpi.metric("Fuera de Meta", f"{fuera_meta}/{vehiculos_total}")
+    
+    # Calcular porcentaje para la tarjeta de "Fuera de Meta"
+    porcentaje_fuera = round((fuera_meta / vehiculos_total) * 100) if vehiculos_total > 0 else 0
 else:
-    col1_kpi.metric("% Ralentí Actual", "0.0%")
-    col2_kpi.metric("Fuera de Meta", "0/0")
+    ralenti_actual = 0.0
+    vehiculos_total = 0
+    fuera_meta = 0
+    porcentaje_fuera = 0
 
-col3_kpi.metric("Meta", f"{META_RALENTI}%")
+# --- COLUMNA 1: % RALENTÍ ACTUAL (Diseño Tarjeta Estándar) ---
+with col1_kpi:
+    st.markdown(f"""
+    <div style="background-color: #ffffff; padding: 22px; border-radius: 12px; border: 1px solid #eef2f6; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; height: 165px;">
+        <div style="font-size: 14px; font-weight: bold; color: #666; margin-bottom: 10px;">% RALENTÍ ACTUAL</div>
+        <div style="font-size: 42px; font-weight: 800; color: #2c3e50; margin-top: 15px;">{ralenti_actual}%</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# --- COLUMNA 2: FUERA DE META (Diseño idéntico a tu imagen) ---
+with col2_kpi:
+    st.markdown(f"""
+    <div style="background-color: #ffffff; padding: 18px; border-radius: 12px; border: 1px solid #eef2f6; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; font-family: sans-serif; height: 165px;">
+        <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 5px;">
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#ff3b30" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <div style="text-align: left;">
+                <div style="font-size: 38px; font-weight: 800; color: #ff3b30; line-height: 1;">{porcentaje_fuera}%</div>
+                <div style="font-size: 11px; font-weight: 700; color: #1c1c1e; letter-spacing: 0.5px; margin-top: 2px;">FUERA DE META</div>
+            </div>
+        </div>
+        <div style="font-size: 18px; font-weight: 700; color: #1c1c1e; margin-top: 15px;">{fuera_meta} de {vehiculos_total} vehículos</div>
+        <div style="font-size: 14px; font-weight: 600; color: #1c1c1e; margin-top: 5px;">Meta: ≤ {META_RALENTI}%</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# --- COLUMNA 3: META DEFINIDA (Diseño Tarjeta Estándar) ---
+with col3_kpi:
+    st.markdown(f"""
+    <div style="background-color: #ffffff; padding: 22px; border-radius: 12px; border: 1px solid #eef2f6; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; height: 165px;">
+        <div style="font-size: 14px; font-weight: bold; color: #666; margin-bottom: 10px;">OBJETIVO INSTITUCIONAL</div>
+        <div style="font-size: 42px; font-weight: 800; color: #7f8c8d; margin-top: 15px;">≤ {META_RALENTI}%</div>
+    </div>
+    """, unsafe_allow_html=True)
+
 
 # =====================================================
 # GRÁFICOS
 # =====================================================
 
 if not dff.empty:
+    st.markdown("<br>", unsafe_allow_html=True) # Espaciador estético
     c1, c2 = st.columns(2)
 
     with c1:
@@ -162,14 +203,9 @@ if not dff.empty:
         grupo_df = grupo_df.sort_values("%ralenti", ascending=True)
 
         fig = px.bar(
-            grupo_df, 
-            x="%ralenti", 
-            y="grupo", 
-            orientation="h",
-            title="% Ralentí por Grupo",
-            labels={"%ralenti": "% Ralentí", "grupo": "Grupo"},
-            color_discrete_sequence=[COLOR_VERDE], 
-            text="%ralenti"
+            grupo_df, x="%ralenti", y="grupo", orientation="h",
+            title="% Ralentí por Grupo", labels={"%ralenti": "% Ralentí", "grupo": "Grupo"},
+            color_discrete_sequence=[COLOR_VERDE], text="%ralenti"
         )
         fig.update_traces(texttemplate='%{text:.0f}%', textposition='outside')
         fig.add_vline(x=META_RALENTI, line_dash="dash", line_color="red", annotation_text="Meta")
@@ -181,14 +217,9 @@ if not dff.empty:
         tipo_df = tipo_df.sort_values("%ralenti", ascending=True)
 
         fig = px.bar(
-            tipo_df, 
-            x="%ralenti", 
-            y="tipo_vehiculo", 
-            orientation="h",
-            title="% Ralentí por Tipo", 
-            labels={"%ralenti": "% Ralentí", "tipo_vehiculo": "Tipo"},
-            color_discrete_sequence=[COLOR_VERDE], 
-            text="%ralenti"
+            tipo_df, x="%ralenti", y="tipo_vehiculo", orientation="h",
+            title="% Ralentí por Tipo", labels={"%ralenti": "% Ralentí", "tipo_vehiculo": "Tipo"},
+            color_discrete_sequence=[COLOR_VERDE], text="%ralenti"
         )
         fig.update_traces(texttemplate='%{text:.0f}%', textposition='outside')
         fig.add_vline(x=META_RALENTI, line_dash="dash", line_color="red", annotation_text="Meta")
