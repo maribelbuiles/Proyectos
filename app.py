@@ -410,5 +410,4 @@ with tab2:
     ### ⚙️ 5. PARÁMETROS TÉCNICOS Y CALIDAD
     * **Fuente de Datos:** Integración automatizada vía API REST con Bronto-Byte (`/api/v2/gps-resumen/vehiculos`).
     * **Frecuencia:** Captura de datos diaria, análisis de tendencias mensual (medido en puntos porcentuales contra el mes anterior).
-    * **Filtro de Limpieza Automático:** El algoritmo depura la base eliminando registros incompletos (`NaN`) y excluye de raíz cualquier dispositivo que pertenezca a bases o grupos marcados como inactivos (`"inac"`), garantizando que los datos muestren únicamente la operación real y activa de la empresa.
     """)
