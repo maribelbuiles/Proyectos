@@ -191,7 +191,7 @@ if not dff.empty:
     fuera_meta = int((promedios_vehiculo > META_RALENTI).sum())
     porcentaje_fuera = int(round((fuera_meta / vehiculos_total) * 100)) if vehiculos_total > 0 else 0
     
-    anterior_pct = 18  # Convertido a entero entero (antes 17.60)
+    anterior_pct = 18
     pp_diff = int(round(ralenti_actual - anterior_pct))
     pp_str = f"+{pp_diff} p.p." if pp_diff >= 0 else f"{pp_diff} p.p."
 
@@ -250,6 +250,33 @@ if not dff.empty:
         
         html_grupo = "<div class='section-box'><div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:15px;'>% RALENTÍ POR GRUPO ℹ️</div>"
         for _, row in grupo_df.iterrows():
-            pct = int(round(row["%ralenti"])) # Entero
-            dev_val = int(round(pct - META_RALENTI)) # Entero
-            dev_str = f"+{dev_val} p.p." if dev_val >= 0 else f"{dev_val} p.
+            pct = int(round(row["%ralenti"]))
+            dev_val = int(round(pct - META_RALENTI))
+            dev_str = f"+{dev_val} p.p." if dev_val >= 0 else f"{dev_val} p.p."
+            dev_color = "#d93025" if dev_val > 0 else "#1e7e34"
+            bar_color = "#e67e22" if pct > META_RALENTI else "#2ecc71"
+            html_grupo += "<div style='margin-bottom: 11px; font-size:13px;'>"
+            html_grupo += "<div style='display:flex; justify-content:space-between; margin-bottom:3px; font-weight:600;'>"
+            html_grupo += "<span style='color:#333;'>" + str(row['grupo']) + "</span>"
+            html_grupo += "<span style='color:#111;'>" + str(pct) + "% <span style='color:" + dev_color + "; font-size:11px; margin-left:5px;'>" + dev_str + "</span></span></div>"
+            html_grupo += "<div style='background-color:#edf2f7; border-radius:4px; height:8px; width:100%;'>"
+            html_grupo += "<div style='background-color:" + bar_color + "; width:" + str(min(pct, 100)) + "%; height:8px; border-radius:4px;'></div></div></div>"
+        html_grupo += "</div>"
+        st.markdown(html_grupo, unsafe_allow_html=True)
+
+    # 2. Columna Tipo de Vehículo
+    with mid_col2:
+        html_tipo = "<div class='section-box'><div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:15px;'>% RALENTÍ POR TIPO DE VEHÍCULO ℹ️</div>"
+        if "tipo_vehiculo" in dff.columns and not dff["tipo_vehiculo"].isna().all():
+            t_df = dff.groupby("tipo_vehiculo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
+            t_df["%ralenti"] = np.where(t_df["encendido_seg"] > 0, (t_df["ralenti_seg"] / t_df["encendido_seg"]) * 100, 0)
+            tipo_df = t_df.sort_values("%ralenti", ascending=False)
+            
+            for _, row in tipo_df.iterrows():
+                pct = int(round(row["%ralenti"]))
+                dev_val = int(round(pct - META_RALENTI))
+                dev_str = f"+{dev_val} p.p." if dev_val >= 0 else f"{dev_val} p.p."
+                dev_color = "#d93025" if dev_val > 0 else "#1e7e34"
+                bar_color = "#1e7e34" if pct <= META_RALENTI else "#e67e22"
+                html_tipo += "<div style='margin-bottom: 11px; font-size:13px;'>"
+                html_tipo += "<div style='display:flex; justify-content:space-between; margin-bottom
