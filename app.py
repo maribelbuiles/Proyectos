@@ -393,7 +393,7 @@ with tab2:
     
     ---
     
-    ### 🚦 4. UMBRALES DE GESTIÓN (SEMÁFORO)
+    ### 🚦 4. NIVELES DE ALERTA (SEMÁFORO)
     | Rango de Cumplimiento | Estado de Alerta | Plan de Acción Institucional |
     | :---: | :---: | :--- |
     | **$\le$ 10%** | 🟢 **Óptimo** | Operación eficiente de la flota. Mantener estándares y replicar buenas prácticas de conducción. |
