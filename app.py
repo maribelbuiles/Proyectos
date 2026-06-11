@@ -249,7 +249,6 @@ if not dff.empty:
         grupo_df = g_df.sort_values("%ralenti", ascending=False)
         
         html_grupo = "<div class='section-box'><div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:15px;'>% RALENTÍ POR GRUPO ℹ️</div>"
-        # Se removió el .head() para mostrar todos los grupos si el usuario hace scroll
         for _, row in grupo_df.iterrows():
             pct = round(row["%ralenti"], 1)
             dev_val = round(pct - META_RALENTI, 1)
@@ -273,7 +272,6 @@ if not dff.empty:
             t_df["%ralenti"] = np.where(t_df["encendido_seg"] > 0, (t_df["ralenti_seg"] / t_df["encendido_seg"]) * 100, 0)
             tipo_df = t_df.sort_values("%ralenti", ascending=False)
             
-            # Se removió el .head(4) iterando sobre todos los tipos para INCLUIR EL DOBLETROQUE
             for _, row in tipo_df.iterrows():
                 pct = round(row["%ralenti"], 1)
                 dev_val = round(pct - META_RALENTI, 1)
@@ -291,7 +289,7 @@ if not dff.empty:
         html_tipo += "</div>"
         st.markdown(html_tipo, unsafe_allow_html=True)
 
-    # 3. Columna Ranking Tabla
+    # 3. Columna Ranking Tabla (Optimizada con white-space: nowrap y combinación de métricas)
     with mid_col3:
         top_df = dff.groupby("nombre_dispositivo").agg({"ralenti_seg": "sum", "encendido_seg": "sum", "grupo": "first"}).reset_index()
         top = top_df.copy()
@@ -302,14 +300,25 @@ if not dff.empty:
         
         html_top = "<div class='section-box'><div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:10px;'>TOP 5 (POR % RALENTÍ)</div>"
         html_top += "<table style='width:100%; border-collapse: collapse; font-size:12px; text-align:left;'>"
-        html_top += "<tr style='border-bottom: 2px solid #edf2f7; color:#555; font-weight:bold;'><th style='padding:6px;'>#</th><th style='padding:6px;'>Placa</th><th style='padding:6px;'>Grupo</th><th style='padding:6px;'>% Ralentí</th><th style='padding:6px;'>Horas en Ralentí</th><th style='padding:6px;'>Horas Operativas</th></tr>"
+        
+        # Se añade white-space: nowrap para asegurar que las cabeceras no se partan en dos líneas
+        html_top += "<tr style='border-bottom: 2px solid #edf2f7; color:#555; font-weight:bold; white-space: nowrap;'>"
+        html_top += "<th style='padding:6px;'>#</th>"
+        html_top += "<th style='padding:6px;'>Placa</th>"
+        html_top += "<th style='padding:6px;'>Grupo</th>"
+        html_top += "<th style='padding:6px;'>% Ralentí (Horas)</th>" # Combinación en un solo título
+        html_top += "<th style='padding:6px;'>Horas Operativas</th></tr>"
+        
         for idx, (_, row) in enumerate(top.iterrows(), 1):
-            html_top += "<tr style='border-bottom: 1px solid #edf2f7; font-weight:600; color:#333;'>"
+            # white-space: nowrap en la fila para asegurar que todo el registro se mantenga lineal
+            html_top += "<tr style='border-bottom: 1px solid #edf2f7; font-weight:600; color:#333; white-space: nowrap;'>"
             html_top += "<td style='padding:7px;'>" + str(idx) + "</td>"
             html_top += "<td style='padding:7px; color:#1e7e34;'>" + str(row['nombre_dispositivo']) + "</td>"
             html_top += "<td style='padding:7px; color:#555;'>" + str(row['grupo']) + "</td>" 
-            html_top += "<td style='padding:7px; color:#d93025;'>" + str(round(row['%ralenti'], 1)) + "%</td>"
-            html_top += "<td style='padding:7px;'>" + str(row['Horas Ralentí']) + " h</td>"
+            
+            # Aquí aparecen el porcentaje y las horas de ralentí de manera conjunta en la misma línea
+            html_top += "<td style='padding:7px; color:#d93025;'>" + str(round(row['%ralenti'], 1)) + "% <span style='color:#555; font-weight:normal; font-size:11px;'>(" + str(row['Horas Ralentí']) + " h)</span></td>"
+            
             html_top += "<td style='padding:7px;'>" + str(row['Horas Operativas']) + " h</td></tr>"
         html_top += "</table></div>"
         st.markdown(html_top, unsafe_allow_html=True)
