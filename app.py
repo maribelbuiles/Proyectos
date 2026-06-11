@@ -273,7 +273,7 @@ if not dff.empty:
         st.markdown(html_tipo, unsafe_allow_html=True)
 
     # 3. Columna Ranking Tabla
-   with mid_col3:
+    with mid_col3:
     top_df = dff.groupby("nombre_dispositivo").agg({
         "ralenti_seg": "sum",
         "encendido_seg": "sum"
