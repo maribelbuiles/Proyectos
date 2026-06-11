@@ -355,7 +355,7 @@ with tab1:
         st.info("⚠️ No hay datos disponibles para los filtros seleccionados. Intenta cambiar el rango de fechas o los filtros.")
 
 # =====================================================
-# PESTAÑA 2: HOJA DE VIDA DEL INDICADOR (Documentación Visual)
+# PESTAÑA 2: HOJA DE VIDA DEL INDICADOR (Documentación Visual sin Metas CO2)
 # =====================================================
 with tab2:
     st.markdown("""
@@ -365,7 +365,7 @@ with tab2:
     
     ### 🎯 1. PROPÓSITO DEL INDICADOR
     * **¿Qué mide?** La proporción de tiempo que los vehículos pasan con el **motor encendido pero completamente detenidos**.
-    * **¿Para qué sirve?** Es nuestra herramienta clave para reducir costos de combustible, evitar el desgaste innecesario del motor y cumplir con las metas de reducción de emisiones de CO₂.
+    * **¿Para qué sirve?** Es nuestra herramienta clave para reducir costos de combustible y evitar el desgaste innecesario del motor.
     
     ---
     
@@ -373,7 +373,7 @@ with tab2:
     El tablero automatiza este cálculo para cualquier nivel de la empresa mediante la siguiente relación:
     """)
     
-    # Renderizado matemático formal e independiente de bloques de código
+    # Renderizado matemático formal e independiente
     st.markdown(r"$$\% \text{ Ralentí} = \left( \frac{\text{Tiempo Detenido (seg)}}{\text{Tiempo Encendido (seg)}} \right) \times 100$$")
     
     st.markdown("""
