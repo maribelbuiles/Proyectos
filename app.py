@@ -355,7 +355,7 @@ with tab1:
         st.info("⚠️ No hay datos disponibles para los filtros seleccionados. Intenta cambiar el rango de fechas o los filtros.")
 
 # =====================================================
-# PESTAÑA 2: HOJA DE VIDA DEL INDICADOR (Documentación Visual sin Metas CO2)
+# PESTAÑA 2: HOJA DE VIDA DEL INDICADOR (Documentación Visual)
 # =====================================================
 with tab2:
     st.markdown("""
@@ -379,7 +379,6 @@ with tab2:
     st.markdown("""
     * **Numerador:** Segundos totales acumulados con motor encendido y vehículo quieto (`detenido_seg` desde la API).
     * **Denominador:** Segundos totales con el motor encendido (`encendido_seg`).
-    * **Resultado final:** Se fuerza a **números enteros** en el tablero para agilizar lecturas ejecutivas.
     
     ---
     
