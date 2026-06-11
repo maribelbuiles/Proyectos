@@ -355,7 +355,7 @@ with tab1:
         st.info("⚠️ No hay datos disponibles para los filtros seleccionados. Intenta cambiar el rango de fechas o los filtros.")
 
 # =====================================================
-# PESTAÑA 2: HOJA DE VIDA DEL INDICADOR (Estructura Corporativa Estándar)
+# PESTAÑA 2: HOJA DE VIDA DEL INDICADOR (Nombre de Sección Mejorado)
 # =====================================================
 with tab2:
     st.markdown("""
@@ -363,7 +363,7 @@ with tab2:
     
     ---
     
-    ### 🔍 1. IDENTIFICACIÓN Y CARACTERIZACIÓN
+    ### 🔍 1. DATOS BÁSICOS DEL INDICADOR
     * **Nombre del Indicador:** Porcentaje de Tiempo en Ralentí (% Ralentí).
     * **Macro-procesos Responsables:** Logística, Distribución y Compras.
     * **Tipo de Indicador:** Eficiencia Operativa / Control de Costos.
@@ -412,7 +412,7 @@ with tab2:
     | **Distribución** | 📍 Última Milla | Gestión del impacto del tráfico urbano, entregas capilares y ventanas de recibo de clientes. |
     | **Compras** | 📦 Materias Primas | Auditoría de tiempos de espera asociados al abastecimiento por parte de proveedores nacionales. |
     
-    *Dimensiones analíticas complementarias:* Análisis granular por **Placa** (Módulo TOP 5 de desvíos), **Tipo de Vehículo** (seguimiento prioritario a flotas pesadas como el Dobletroque) and tipo de **Combustible**.
+    *Dimensiones analíticas complementarias:* Análisis granular por **Placa** (Módulo TOP 5 de desvíos), **Tipo de Vehículo** (seguimiento prioritario a flotas pesadas como el Dobletroque) y tipo de **Combustible**.
     
     ---
     
