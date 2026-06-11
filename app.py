@@ -355,7 +355,7 @@ with tab1:
         st.info("⚠️ No hay datos disponibles para los filtros seleccionados. Intenta cambiar el rango de fechas o los filtros.")
 
 # =====================================================
-# PESTAÑA 2: HOJA DE VIDA DEL INDICADOR (Nombres Amigables)
+# PESTAÑA 2: HOJA DE VIDA DEL INDICADOR (Nombre de Sección Amigable)
 # =====================================================
 with tab2:
     st.markdown("""
@@ -402,7 +402,7 @@ with tab2:
     
     ---
     
-    ### 🏢 5. MATRIZ DE DESGLOSE OPERATIVO Y RESPONSABILIDADES
+    ### 🏢 5. RESPONSABLES Y ÁREAS OPERATIVAS
     El indicador se evalúa de manera transversal controlando los siguientes frentes de trabajo indexados en el sistema:
     
     | Macro-Área Responsable | Grupo Operativo (Filtro) | Enfoque Crítico del Análisis en Ralentí |
