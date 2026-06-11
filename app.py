@@ -355,7 +355,7 @@ with tab1:
         st.info("⚠️ No hay datos disponibles para los filtros seleccionados. Intenta cambiar el rango de fechas o los filtros.")
 
 # =====================================================
-# PESTAÑA 2: HOJA DE VIDA DEL INDICADOR (Nombre de Sección Amigable)
+# PESTAÑA 2: HOJA DE VIDA DEL INDICADOR (Estructura Sin Sección 6)
 # =====================================================
 with tab2:
     st.markdown("""
@@ -413,10 +413,4 @@ with tab2:
     | **Compras** | 📦 Materias Primas | Auditoría de tiempos de espera asociados al abastecimiento por parte de proveedores nacionales. |
     
     *Dimensiones analíticas complementarias:* Análisis granular por **Placa** (Módulo TOP 5 de desvíos), **Tipo de Vehículo** (seguimiento prioritario a flotas pesadas como el Dobletroque) y tipo de **Combustible**.
-    
-    ---
-    
-    ### ⚙️ 6. PARÁMETROS TÉCNICOS Y RECOLECCIÓN
-    * **Fuente de Información Oficial:** Telemetría automatizada vía API REST de Bronto-Byte (`/api/v2/gps-resumen/vehiculos`).
-    * **Frecuencia de Actualización:** Automatizada con refresco de caché programado (TTL de 3600 segundos).
     """)
