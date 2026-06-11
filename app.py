@@ -135,7 +135,7 @@ if df.empty:
 # =====================================================
 st.title("TABLERO DE GESTIÓN – RALENTÍ")
 
-tab1, tab2 = st.tabs(["📊 Tablero de Control", "📄 Hoja de Vida del Indicador"])
+tab1, tab2 = st.tabs(["📊 Tablero de Control", "📋 Hoja de Vida del Indicador"])
 
 # =====================================================
 # PESTAÑA 1: TABLERO DE CONTROL (Operación de la Flota)
@@ -355,59 +355,68 @@ with tab1:
         st.info("⚠️ No hay datos disponibles para los filtros seleccionados. Intenta cambiar el rango de fechas o los filtros.")
 
 # =====================================================
-# PESTAÑA 2: HOJA DE VIDA DEL INDICADOR (Documentación Visual)
+# PESTAÑA 2: HOJA DE VIDA DEL INDICADOR (Estructura Corporativa Estándar)
 # =====================================================
 with tab2:
     st.markdown("""
-    ## 📄 FICHA TÉCNICA: PORCENTAJE DE RALENTÍ VEHICULAR
+    ## 📋 HOJA DE VIDA DEL INDICADOR (FICHA TÉCNICA)
     
     ---
     
-    ### 🎯 1. PROPÓSITO DEL INDICADOR
-    * **¿Qué mide?** La proporción de tiempo que los vehículos pasan con el **motor encendido pero completamente detenidos**.
-    * **¿Para qué sirve?** Es nuestra herramienta clave para reducir costos de combustible y evitar el desgaste innecesario del motor.
+    ### 🔍 1. IDENTIFICACIÓN Y CARACTERIZACIÓN
+    * **Nombre del Indicador:** Porcentaje de Tiempo en Ralentí (% Ralentí).
+    * **Macro-procesos Responsables:** Logística, Distribución y Compras.
+    * **Tipo de Indicador:** Eficiencia Operativa / Control de Costos.
+    * **Unidad de Medida:** Porcentaje (%).
+    * **Periodicidad de Captura:** Diaria (acumulado dinámico según selección).
+    * **Periodicidad de Análisis:** Mensual (medido en puntos porcentuales - p.p.).
     
     ---
     
-    ### 🧮 2. FÓRMULA MATEMÁTICA
-    El tablero automatiza este cálculo para cualquier nivel de la empresa mediante la siguiente relación:
+    ### 🎯 2. ALINEACIÓN ESTRATÉGICA
+    * **Objetivo General:** Monitorear y controlar el tiempo improductivo de la flota vehicular (motor encendido sin desplazamiento) para minimizar el gasto innecesario de combustible y reducir el desgaste prematuro de los componentes mecánicos del motor.
+    * **Línea Base Histórica:** 18% (Mes anterior de referencia).
+    * **Meta Institucional:** $\le$ 10% de tiempo en ralentí sobre el tiempo total de encendido de la flota.
+    
+    ---
+    
+    ### 🧮 3. ESPECIFICACIÓN MATEMÁTICA Y VARIABLES
+    La medición automatizada se rige bajo la siguiente relación matemática fundamental:
     """)
     
-    # Renderizado matemático formal e independiente
     st.markdown(r"$$\% \text{ Ralentí} = \left( \frac{\text{Tiempo Detenido (seg)}}{\text{Tiempo Encendido (seg)}} \right) \times 100$$")
     
     st.markdown("""
-    * **Numerador:** Segundos totales acumulados con motor encendido y vehículo quieto (`detenido_seg` desde la API).
-    * **Denominador:** Segundos totales con el motor encendido (`encendido_seg`).
+    #### Glosario de Variables del Sistema:
+    * **Tiempo Detenido (Numerador):** Segundos totales acumulados en los que el vehículo permaneció en estado estacionario (velocidad = 0) con el sistema de ignición activo (`detenido_seg` / `ralenti_seg`).
+    * **Tiempo Encendido (Denominador):** Segundos totales acumulados de operación activa de los motores (`encendido_seg`).
     
     ---
     
-    ### 🚦 3. SEMÁFORO DE CONTROL (Metas de Gestión)
-    El desempeño de la flota se clasifica dinámicamente bajo tres niveles de alerta:
-    
-    | Rango | Estado | Significado / Plan de Acción |
+    ### 🚦 4. UMBRALES DE GESTIÓN (SEMÁFORO)
+    | Rango de Cumplimiento | Estado de Alerta | Plan de Acción Institucional |
     | :---: | :---: | :--- |
-    | **$\le$ 10%** | 🟢 **Óptimo** | Operación eficiente de la flota. Mantener y reconocer las buenas prácticas de conducción. |
-    | **11% a 15%** | 🟡 **Alerta** | Desviación moderada. Requiere revisión de tiempos de espera en zonas de carga y descarga. |
-    | **> 15%** | 🔴 **Crítico** | Operación ineficiente. Activa la alerta visual roja en el tablero. Requiere intervención inmediata del supervisor. |
+    | **$\le$ 10%** | 🟢 **Óptimo** | Operación eficiente de la flota. Mantener estándares y replicar buenas prácticas de conducción. |
+    | **11% a 15%** | 🟡 **Alerta** | Desviación moderada. Monitorear tiempos de espera en zonas logísticas de carga/descarga. |
+    | **> 15%** | 🔴 **Crítico** | Operación ineficiente. Requiere auditoría inmediata por placa y llamado a revisión con el supervisor de área. |
     
     ---
     
-    ### 🏢 4. DESGLOSE POR OPERACIÓN Y RESPONSABILIDADES
-    Para facilitar planes de acción concretos, el indicador se segmenta según el organigrama oficial:
+    ### 🏢 5. MATRIZ DE DESGLOSE OPERATIVO Y RESPONSABILIDADES
+    El indicador se evalúa de manera transversal controlando los siguientes frentes de trabajo indexados en el sistema:
     
     | Macro-Área Responsable | Grupo Operativo (Filtro) | Enfoque Crítico del Análisis en Ralentí |
     | :--- | :--- | :--- |
-    | **Logística** | 🚚 Primera Milla | Monitorear tiempos muertos en puertos, centros de acopio o transferencias iniciales. |
-    | **Logística** | 🔄 Transporte Interno | Controlar la eficiencia en movimientos inter-plantas o patios internos de la compañía. |
-    | **Distribución** | 📍 Última Milla | Evaluar el impacto del tráfico urbano, entregas capilares y ventanas de recibo con clientes. |
-    | **Compras** | 📦 Materias Primas | Revisar los tiempos de espera logísticos asociados al abastecimiento por parte de proveedores. |
+    | **Logística** | 🚚 Primera Milla | Control de tiempos de espera en puertos, centros de acopio o transferencias iniciales. |
+    | **Logística** | 🔄 Transporte Interno | Control de eficiencia en movimientos inter-plantas o patios internos de la compañía. |
+    | **Distribución** | 📍 Última Milla | Gestión del impacto del tráfico urbano, entregas capilares y ventanas de recibo de clientes. |
+    | **Compras** | 📦 Materias Primas | Auditoría de tiempos de espera asociados al abastecimiento por parte de proveedores nacionales. |
     
-    *Otras dimensiones de análisis disponibles:* Desglose por **Placa** (Módulo TOP 5 de desvíos), **Tipo de Vehículo** (seguimiento a pesados como el Dobletroque) y tipo de **Combustible**.
+    *Dimensiones analíticas complementarias:* Análisis granular por **Placa** (Módulo TOP 5 de desvíos), **Tipo de Vehículo** (seguimiento prioritario a flotas pesadas como el Dobletroque) y tipo de **Combustible**.
     
     ---
     
-    ### ⚙️ 5. PARÁMETROS TÉCNICOS Y CALIDAD
-    * **Fuente de Datos:** Integración automatizada vía API REST con Bronto-Byte (`/api/v2/gps-resumen/vehiculos`).
-    * **Frecuencia:** Captura de datos diaria, análisis de tendencias mensual (medido en puntos porcentuales contra el mes anterior).
+    ### ⚙️ 6. PARÁMETROS TÉCNICOS Y RECOLECCIÓN
+    * **Fuente de Información Oficial:** Telemetría automatizada vía API REST de Bronto-Byte (`/api/v2/gps-resumen/vehiculos`).
+    * **Frecuencia de Actualización:** Automatizada con refresco de caché programado (TTL de 3600 segundos).
     """)
