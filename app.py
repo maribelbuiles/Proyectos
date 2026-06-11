@@ -355,7 +355,7 @@ with tab1:
         st.info("⚠️ No hay datos disponibles para los filtros seleccionados. Intenta cambiar el rango de fechas o los filtros.")
 
 # =====================================================
-# PESTAÑA 2: HOJA DE VIDA DEL INDICADOR (Nombre de Sección Mejorado)
+# PESTAÑA 2: HOJA DE VIDA DEL INDICADOR (Nombre de Sección Amigable)
 # =====================================================
 with tab2:
     st.markdown("""
@@ -373,7 +373,7 @@ with tab2:
     
     ---
     
-    ### 🎯 2. ALINEACIÓN ESTRATÉGICA
+    ### 🎯 2. OBJETIVOS Y METAS
     * **Objetivo General:** Monitorear y controlar el tiempo improductivo de la flota vehicular (motor encendido sin desplazamiento) para minimizar el gasto innecesario de combustible y reducir el desgaste prematuro de los componentes mecánicos del motor.
     * **Línea Base Histórica:** 18% (Mes anterior de referencia).
     * **Meta Institucional:** $\le$ 10% de tiempo en ralentí sobre el tiempo total de encendido de la flota.
@@ -408,7 +408,7 @@ with tab2:
     | Macro-Área Responsable | Grupo Operativo (Filtro) | Enfoque Crítico del Análisis en Ralentí |
     | :--- | :--- | :--- |
     | **Logística** | 🚚 Primera Milla | Control de tiempos de espera en puertos, centros de acopio o transferencias iniciales. |
-    | **Logística** | 🔄 Transporte Interno | Control de eficiencia en movimientos inter-plantas o patios internos de la compañía. |
+    | **Logística** | 🔄 Transporte Internn | Control de eficiencia en movimientos inter-plantas o patios internos de la compañía. |
     | **Distribución** | 📍 Última Milla | Gestión del impacto del tráfico urbano, entregas capilares y ventanas de recibo de clientes. |
     | **Compras** | 📦 Materias Primas | Auditoría de tiempos de espera asociados al abastecimiento por parte de proveedores nacionales. |
     
