@@ -131,7 +131,7 @@ if df.empty:
     st.stop()
 
 # =====================================================
-# ENCABEZADO PRINCIPAL Y CREACIÓN DE PESTAÑAS
+# ENCABEZADO PRINCIPAL Y PESTAÑAS
 # =====================================================
 st.title("TABLERO DE GESTIÓN – RALENTÍ")
 
@@ -301,6 +301,7 @@ with tab1:
             
             html_top = "<div class='section-box'><div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:10px;'>TOP 5 (POR % RALENTÍ)</div>"
             html_top += "<table style='width:100%; border-collapse: collapse; font-size:11px; text-align:left; table-layout: auto;'>"
+            
             html_top += "<tr style='border-bottom: 2px solid #edf2f7; color:#555; font-weight:bold; white-space: nowrap;'>"
             html_top += "<th style='padding:4px;'>#</th><th style='padding:4px;'>Placa</th><th style='padding:4px;'>Grupo</th><th style='padding:4px;'>% Ral. (H)</th><th style='padding:4px;'>H. Operativas</th></tr>"
             
@@ -354,65 +355,61 @@ with tab1:
         st.info("⚠️ No hay datos disponibles para los filtros seleccionados. Intenta cambiar el rango de fechas o los filtros.")
 
 # =====================================================
-# PESTAÑA 2: HOJA DE VIDA DEL INDICADOR (Documentación)
+# PESTAÑA 2: HOJA DE VIDA DEL INDICADOR (Documentación Visual)
 # =====================================================
 with tab2:
     st.markdown("""
-    ## 📄 FICHA TÉCNICA DEL INDICADOR: PORCENTAJE DE RALENTÍ
+    ## 📄 FICHA TÉCNICA: PORCENTAJE DE RALENTÍ VEHICULAR
     
     ---
     
-    ### 1. Información General
-    * **Nombre del Indicador:** Porcentaje de Tiempo en Ralentí (% Ralentí).
-    * **Áreas / Macro-procesos Involucrados:** Logística, Distribución y Compras.
-    * **Objetivo:** Monitorear el tiempo improductivo de la flota vehicular (motor encendido sin desplazamiento) en los diferentes frentes operativos de la compañía para reducir costos de combustible, mitigar el desgaste de motores y controlar las emisiones de CO2.
+    ### 🎯 1. PROPÓSITO DEL INDICADOR
+    * **¿Qué mide?** La proporción de tiempo que los vehículos pasan con el **motor encendido pero completamente detenidos**.
+    * **¿Para qué sirve?** Es nuestra herramienta clave para reducir costos de combustible, evitar el desgaste innecesario del motor y cumplir con las metas de reducción de emisiones de CO₂.
     
-    ### 2. Definición y Características
-    * **Descripción:** Mide la proporción de tiempo (expresada en números enteros) que un vehículo permanece encendido pero en estado de detención (estacionario), respecto al tiempo total que el motor estuvo activo.
-    * **Unidad de Medida:** Porcentaje (%).
-    * **Frecuencia de Medición:** Diaria (acumulada por periodos seleccionados).
-    * **Frecuencia de Análisis:** Mensual (comparativo contra el mes anterior en puntos porcentuales).
+    ---
     
-    ### 3. Componentes del Cálculo
-    La fórmula matemática que ejecuta el tablero para calcular el indicador a cualquier nivel de agregación es:
+    ### 🧮 2. FÓRMULA MATEMÁTICA
+    El tablero automatiza este cálculo para cualquier nivel de la empresa mediante la siguiente relación:
     """)
     
-    # Renderizado formal de la ecuación fuera de bloques de código
+    # Renderizado matemático formal e independiente de bloques de código
     st.markdown(r"$$\% \text{ Ralentí} = \left( \frac{\text{Tiempo Detenido (seg)}}{\text{Tiempo Encendido (seg)}} \right) \times 100$$")
     
     st.markdown("""
-    *Nota técnica: El sistema toma el parámetro de la API llamado `detenido_seg` y lo procesa internamente como la variable de ralentí.*
-    
-    | Variable | Descripción | Unidad | Origen de Datos |
-    | :--- | :--- | :--- | :--- |
-    | **Numerador** | Tiempo total acumulado en el que el vehículo estuvo detenido con el motor encendido. | Segundos | API GPS Resumen Vehículos |
-    | **Denominador** | Tiempo total de operación en el que el motor del vehículo estuvo encendido. | Segundos | API GPS Resumen Vehículos |
+    * **Numerador:** Segundos totales acumulados con motor encendido y vehículo quieto (`detenido_seg` desde la API).
+    * **Denominador:** Segundos totales con el motor encendido (`encendido_seg`).
+    * **Resultado final:** Se fuerza a **números enteros** en el tablero para agilizar lecturas ejecutivas.
     
     ---
     
-    ### 4. Umbrales de Gestión (Semáforo de Rendimiento)
-    De acuerdo con las reglas de negocio configuradas en el código, se aplican los siguientes límites fijos:
-    * 🟢 **En Meta (Óptimo):** Menor o igual a 10%. Operación eficiente. Mantener y reconocer las buenas prácticas de conducción.
-    * 🟡 **Alerta (Desviación):** Entre 11% y 15%. Desviación moderada. Requiere revisión de tiempos de espera en carga/descarga.
-    * 🔴 **Crítico:** Mayor a 15%. Nivel ineficiente. Activa la alerta visual roja en las tarjetas de control del tablero. Requiere intervención inmediata.
+    ### 🚦 3. SEMÁFORO DE CONTROL (Metas de Gestión)
+    El desempeño de la flota se clasifica dinámicamente bajo tres niveles de alerta:
+    
+    | Rango | Estado | Significado / Plan de Acción |
+    | :---: | :---: | :--- |
+    | **$\le$ 10%** | 🟢 **Óptimo** | Operación eficiente de la flota. Mantener y reconocer las buenas prácticas de conducción. |
+    | **11% a 15%** | 🟡 **Alerta** | Desviación moderada. Requiere revisión de tiempos de espera en zonas de carga y descarga. |
+    | **> 15%** | 🔴 **Crítico** | Operación ineficiente. Activa la alerta visual roja en el tablero. Requiere intervención inmediata del supervisor. |
     
     ---
     
-    ### 5. Estructura de Desglose y Responsabilidades
-    El indicador se segmenta dinámicamente en el tablero bajo el organigrama y responsabilidades de la compañía:
+    ### 🏢 4. DESGLOSE POR OPERACIÓN Y RESPONSABILIDADES
+    Para facilitar planes de acción concretos, el indicador se segmenta según el organigrama oficial:
     
-    | Macro-Área Responsable | Grupo Operativo (Filtro) | Enfoque del Análisis en Ralentí |
+    | Macro-Área Responsable | Grupo Operativo (Filtro) | Enfoque Crítico del Análisis en Ralentí |
     | :--- | :--- | :--- |
-    | **Logística** | Primera Milla | Tiempos de espera en puertos, centros de acopio o transferencias iniciales. |
-    | **Logística** | Transporte Interno | Eficiencia en movimientos inter-plantas o patios internos de la compañía. |
-    | **Distribución** | Última Milla | Impacto del tráfico urbano, entregas capilares y ventanas de recibo con clientes. |
-    | **Compras** | Materias Primas | Tiempos muertos logísticos asociados al abastecimiento de proveedores. |
+    | **Logística** | 🚚 Primera Milla | Monitorear tiempos muertos en puertos, centros de acopio o transferencias iniciales. |
+    | **Logística** | 🔄 Transporte Interno | Controlar la eficiencia en movimientos inter-plantas o patios internos de la compañía. |
+    | **Distribución** | 📍 Última Milla | Evaluar el impacto del tráfico urbano, entregas capilares y ventanas de recibo con clientes. |
+    | **Compras** | 📦 Materias Primas | Revisar los tiempos de espera logísticos asociados al abastecimiento por parte de proveedores. |
     
-    *Otras dimensiones analíticas disponibles en la pestaña de control:* Desglose por **Placa** (Módulo TOP 5 de desviaciones críticas), **Tipo de Vehículo** (Monitoreo especial de unidades pesadas como el Dobletroque) y tipo de **Combustible**.
+    *Otras dimensiones de análisis disponibles:* Desglose por **Placa** (Módulo TOP 5 de desvíos), **Tipo de Vehículo** (seguimiento a pesados como el Dobletroque) y tipo de **Combustible**.
     
     ---
     
-    ### 6. Consideraciones y Calidad de la Información
-    * **Fuente de Información:** Integración directa vía API REST con el endpoint `/api/v2/gps-resumen/vehiculos` de Bronto-Byte.
-    * **Garantía de Calidad de Datos:** El algoritmo limpia automáticamente la información antes de calcular el indicador: elimina registros sin grupo asignado (`NaN`), celdas vacías y excluye de raíz cualquier dispositivo que pertenezca a bases o grupos marcados con la etiqueta de inactivos (`"inac"`), asegurando que el % ralentí refleje únicamente la operación activa de Compras, Logística y Distribución.
+    ### ⚙️ 5. PARÁMETROS TÉCNICOS Y CALIDAD
+    * **Fuente de Datos:** Integración automatizada vía API REST con Bronto-Byte (`/api/v2/gps-resumen/vehiculos`).
+    * **Frecuencia:** Captura de datos diaria, análisis de tendencias mensual (medido en puntos porcentuales contra el mes anterior).
+    * **Filtro de Limpieza Automático:** El algoritmo depura la base eliminando registros incompletos (`NaN`) y excluye de raíz cualquier dispositivo que pertenezca a bases o grupos marcados como inactivos (`"inac"`), garantizando que los datos muestren únicamente la operación real y activa de la empresa.
     """)
