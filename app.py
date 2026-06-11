@@ -33,9 +33,25 @@ st.markdown("""
             border-radius: 10px; 
             border: 1px solid #e1e8ed; 
             box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-            min-height: 340px;
+            height: 380px; /* Altura fija para mantener alineación */
+            overflow-y: auto; /* Barra de desplazamiento si hay muchos elementos */
             font-family: sans-serif;
             margin-bottom: 20px;
+        }
+        /* Estilos personalizados para el scroll de las tarjetas */
+        .section-box::-webkit-scrollbar {
+            width: 6px;
+        }
+        .section-box::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+            border-radius: 4px;
+        }
+        .section-box::-webkit-scrollbar-thumb {
+            background: #c1c1c1; 
+            border-radius: 4px;
+        }
+        .section-box::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8; 
         }
     </style>
 """, unsafe_allow_html=True)
@@ -115,7 +131,7 @@ if df.empty:
     st.stop()
 
 # =====================================================
-# ENCABEZADO PRINCIPAL (IMAGEN REMOVIDA)
+# ENCABEZADO PRINCIPAL
 # =====================================================
 st.title("TABLERO DE GESTIÓN – RALENTÍ")
 
@@ -233,7 +249,8 @@ if not dff.empty:
         grupo_df = g_df.sort_values("%ralenti", ascending=False)
         
         html_grupo = "<div class='section-box'><div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:15px;'>% RALENTÍ POR GRUPO ℹ️</div>"
-        for _, row in grupo_df.head(4).iterrows():
+        # Se removió el .head() para mostrar todos los grupos si el usuario hace scroll
+        for _, row in grupo_df.iterrows():
             pct = round(row["%ralenti"], 1)
             dev_val = round(pct - META_RALENTI, 1)
             dev_str = f"+{dev_val} p.p." if dev_val >= 0 else f"{dev_val} p.p."
@@ -255,7 +272,9 @@ if not dff.empty:
             t_df = dff.groupby("tipo_vehiculo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
             t_df["%ralenti"] = np.where(t_df["encendido_seg"] > 0, (t_df["ralenti_seg"] / t_df["encendido_seg"]) * 100, 0)
             tipo_df = t_df.sort_values("%ralenti", ascending=False)
-            for _, row in tipo_df.head(4).iterrows():
+            
+            # Se removió el .head(4) iterando sobre todos los tipos para INCLUIR EL DOBLETROQUE
+            for _, row in tipo_df.iterrows():
                 pct = round(row["%ralenti"], 1)
                 dev_val = round(pct - META_RALENTI, 1)
                 dev_str = f"+{dev_val} p.p." if dev_val >= 0 else f"{dev_val} p.p."
@@ -272,9 +291,8 @@ if not dff.empty:
         html_tipo += "</div>"
         st.markdown(html_tipo, unsafe_allow_html=True)
 
-    # 3. Columna Ranking Tabla (Se incluyó la columna Grupo)
+    # 3. Columna Ranking Tabla
     with mid_col3:
-        # Se agrega "grupo": "first" al agg para capturar a qué grupo pertenece el dispositivo
         top_df = dff.groupby("nombre_dispositivo").agg({"ralenti_seg": "sum", "encendido_seg": "sum", "grupo": "first"}).reset_index()
         top = top_df.copy()
         top["%ralenti"] = np.where(top["encendido_seg"] > 0, (top["ralenti_seg"] / top["encendido_seg"]) * 100, 0)
@@ -289,7 +307,7 @@ if not dff.empty:
             html_top += "<tr style='border-bottom: 1px solid #edf2f7; font-weight:600; color:#333;'>"
             html_top += "<td style='padding:7px;'>" + str(idx) + "</td>"
             html_top += "<td style='padding:7px; color:#1e7e34;'>" + str(row['nombre_dispositivo']) + "</td>"
-            html_top += "<td style='padding:7px; color:#555;'>" + str(row['grupo']) + "</td>" # Celda de Grupo
+            html_top += "<td style='padding:7px; color:#555;'>" + str(row['grupo']) + "</td>" 
             html_top += "<td style='padding:7px; color:#d93025;'>" + str(round(row['%ralenti'], 1)) + "%</td>"
             html_top += "<td style='padding:7px;'>" + str(row['Horas Ralentí']) + " h</td>"
             html_top += "<td style='padding:7px;'>" + str(row['Horas Operativas']) + " h</td></tr>"
