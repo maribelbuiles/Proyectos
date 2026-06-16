@@ -358,7 +358,7 @@ with tab1:
         st.info("⚠️ No hay datos disponibles para los filtros seleccionados. Intenta cambiar el rango de fechas o los filtros.")
 
 # =====================================================
-# PESTAÑA 2: HOJA DE VIDA DEL INDICADOR (Estructura Sin Sección 6)
+# PESTAÑA 2: HOJA DE VIDA DEL INDICADOR
 # =====================================================
 with tab2:
     st.markdown("""
@@ -400,7 +400,7 @@ with tab2:
     | :---: | :---: | :--- |
     | **$\le$ 10%** | 🟢 **Óptimo** | Operación eficiente de la flota. Mantener estándares y replicar buenas prácticas de conducción. |
     | **11% a 15%** | 🟡 **Alerta** | Desviación moderada. Monitorear tiempos de espera en zonas logísticas de carga/descarga. |
-    | **> 15%** | 🔴 **Crítico** | Operación ineficiente. Requiere auditoría inmediata por placa y llamado a revisión con el supervisor de área. |
+    | **> 15%** | 🔴 **Crítico** | Operación ineficiente. Requiere auditoría inmediata por placa y llamado a revisión con el Director de área. |
     
     ---
     
