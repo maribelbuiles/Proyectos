@@ -22,36 +22,85 @@ st.markdown("""
 META_RALENTI = 10
 
 # =====================================================
-# API Y PROCESAMIENTO
+# LÓGICA DE CARGA DE DATOS (API)
 # =====================================================
 @st.cache_data(ttl=3600)
 def cargar_datos():
-    # (Mantener lógica de API existente...)
-    return df # (Asumiendo que df ya está cargado con la lógica original)
+    usuario, clave = "incubadora.pbi", "incubadora.pbi123"
+    base_url = "https://app.bronto-byte.com"
+    try:
+        token_response = requests.post(f"{base_url}/api/obtenerToken", json={"usuario": usuario, "clave": clave}, timeout=10)
+        token = token_response.json()["token"].replace("Bearer ", "")
+        response = requests.get(f"{base_url}/api/v2/gps-resumen/vehiculos", headers={"Authorization": f"Bearer {token}"}, timeout=15)
+        data = response.json()
+        registros = data.get("data", [])
+        if not registros: return pd.DataFrame()
+        df = pd.DataFrame(registros)
+        df["fecha"] = pd.to_datetime(df["fecha"])
+        df["ralenti_seg"] = df["detenido_seg"]
+        df["porcentaje_ralenti"] = np.where(df["encendido_seg"] > 0, (df["ralenti_seg"] / df["encendido_seg"]) * 100, 0)
+        if "grupo" in df.columns:
+            df = df[df["grupo"].notna()]
+            df["grupo"] = df["grupo"].astype(str).str.strip()
+        return df
+    except: return pd.DataFrame()
 
 df = cargar_datos()
+if df.empty: st.warning("Error cargando datos."); st.stop()
 
 # =====================================================
-# PESTAÑA 1: FILTROS EN CASCADA
+# INTERFAZ
 # =====================================================
+st.title("TABLERO DE GESTIÓN – RALENTÍ")
+tab1, tab2 = st.tabs(["📊 Tablero de Control", "📋 Hoja de Vida del Indicador"])
+
 with tab1:
-    col1, col2, col3, col4, col5 = st.columns(5)
+    # --- FILTROS EN CASCADA ---
+    col1, col2, col3, col4, col5 = st.columns([1.8, 1.8, 1.8, 1.8, 2.8])
     
-    # 1. Filtro Grupo
-    grupos_sel = col1.multiselect("Grupo", sorted(df["grupo"].unique()))
-    dff = df[df["grupo"].isin(grupos_sel)] if grupos_sel else df.copy()
+    grupos = col1.multiselect("Grupo", sorted(df["grupo"].unique()))
+    dff = df[df["grupo"].isin(grupos)] if grupos else df.copy()
     
-    # 2. Filtro Vehículo (Dependiente de Grupo)
-    vehiculos_sel = col2.multiselect("Vehículo", sorted(dff["nombre_dispositivo"].unique()))
-    dff = dff[dff["nombre_dispositivo"].isin(vehiculos_sel)] if vehiculos_sel else dff
+    vehiculos = col2.multiselect("Vehículo", sorted(dff["nombre_dispositivo"].unique()))
+    dff = dff[dff["nombre_dispositivo"].isin(vehiculos)] if vehiculos else dff
     
-    # 3. Filtro Tipo Vehículo (Dependiente de lo anterior)
-    tipos_sel = col3.multiselect("Tipo de vehículo", sorted(dff["tipo_vehiculo"].dropna().unique()))
-    dff = dff[dff["tipo_vehiculo"].isin(tipos_sel)] if tipos_sel else dff
+    tipos = col3.multiselect("Tipo de vehículo", sorted(dff["tipo_vehiculo"].dropna().unique()))
+    dff = dff[dff["tipo_vehiculo"].isin(tipos)] if tipos else dff
     
-    # 4. Filtro Combustible
-    comb_col = "combustible" if "combustible" in dff.columns else "tipo_combustible"
-    comb_sel = col4.multiselect("Combustible", sorted(dff[comb_col].dropna().unique()))
-    dff = dff[dff[comb_col].isin(comb_sel)] if comb_sel else dff
+    col_c = "combustible" if "combustible" in dff.columns else "tipo_combustible"
+    combustibles = col4.multiselect("Combustible", sorted(dff[col_c].dropna().unique()))
+    dff = dff[dff[col_c].isin(combustibles)] if combustibles else dff
+    
+    st.info("Tablero cargado con lógica de filtros en cascada activa.")
 
-    # (El resto del código de gráficos continúa igual...)
+with tab2:
+    st.markdown("""
+    ## 📋 HOJA DE VIDA DEL INDICADOR
+    ---
+    ### 🔍 1. DATOS BÁSICOS DEL INDICADOR
+    * **Nombre del Indicador:** Porcentaje de Tiempo en Ralentí (% Ralentí).
+    * **Macro-procesos Responsables:** Logística, Distribución y Compras.
+    * **Tipo de Indicador:** Eficiencia Operativa / Control de Costos.
+    * **Unidad de Medida:** Porcentaje (%).
+    * **Periodicidad de Captura:** Diaria.
+    * **Periodicidad de Análisis:** Mensual (medido en puntos porcentuales - p.p.).
+    
+    ---
+    ### 🎯 2. OBJETIVOS Y METAS
+    * **Objetivo General:** Monitorear y controlar el tiempo improductivo de la flota.
+    * **Línea Base Histórica:** 18%
+    * **Meta:** $\le$ 10% de tiempo en ralentí sobre el tiempo total de encendido.
+    
+    ---
+    ### 🚦 4. NIVELES DE ALERTA (SEMÁFORO)
+    | Rango | Estado | Plan de Acción |
+    | :--- | :--- | :--- |
+    | **🔴 Crítico** | **> 15%** | Operación ineficiente. Requiere auditoría inmediata por placa y llamado a revisión con el director del área. |
+    
+    ---
+    ### 🏢 5. RESPONSABLES Y ÁREAS OPERATIVAS
+    | Macro-Área | Grupo Operativo | Enfoque Crítico del Análisis en Ralentí |
+    | :--- | :--- | :--- |
+    | **Logística** | 🚚 Primera Milla | Enfoque Crítico del Análisis en Ralentí: Control de tiempos de espera en plantas, Cedis, Centros de Empaque |
+    | **Logística** | Transporte Interno | Enfoque Crítico del Análisis en Ralentí: Control de tiempos de espera en plantas de alimentos, producciones avicolas y plantas clasificadoras |
+    """)
