@@ -138,50 +138,61 @@ st.title("TABLERO DE GESTIÓN – RALENTÍ")
 tab1, tab2 = st.tabs(["📊 Tablero de Control", "📋 Hoja de Vida del Indicador"])
 
 # =====================================================
-# PESTAÑA 1: TABLERO DE CONTROL (MANTENIDO IGUAL)
+# PESTAÑA 1: TABLERO DE CONTROL (Operación de la Flota)
 # =====================================================
 with tab1:
-    # --- FILTROS ---
+    # --- FILTROS EN CASCADA ---
     fil_col1, fil_col2, fil_col3, fil_col4, fil_col5 = st.columns([1.8, 1.8, 1.8, 1.8, 2.8])
+
+    # Inicializamos dff aquí para irlo reduciendo paso a paso según las selecciones
+    dff = df.copy()
 
     with fil_col1:
         grupos = st.multiselect("Grupo", sorted(df["grupo"].unique()), placeholder="Todas")
-    with fil_col2:
-        vehiculos = st.multiselect("Vehículo", sorted(df["nombre_dispositivo"].unique()), placeholder="Todas")
-    with fil_col3:
-        tipos_v = sorted(df["tipo_vehiculo"].dropna().unique()) if "tipo_vehiculo" in df.columns else []
-        tipos = st.multiselect("Tipo de vehículo", tipos_v, placeholder="Todas")
-    with fil_col4:
-        if "combustible" in df.columns:
-            combustibles_v = sorted(df["combustible"].dropna().unique())
-        elif "tipo_combustible" in df.columns:
-            combustibles_v = sorted(df["tipo_combustible"].dropna().unique())
-        else:
-            combustibles_v = []
-        combustibles = st.multiselect("Combustible", combustibles_v, placeholder="Todas")
-    with fil_col5:
-        rango = st.date_input("Periodo", (df["fecha"].min(), df["fecha"].max()))
-
-    # Filtrado dinámico del DataFrame
-    dff = df.copy()
-
+    
+    # Si hay grupos seleccionados, limitamos el dataframe *antes* de mostrar las opciones de Vehículo
     if grupos:
         dff = dff[dff["grupo"].isin(grupos)]
+
+    with fil_col2:
+        vehiculos = st.multiselect("Vehículo", sorted(dff["nombre_dispositivo"].unique()), placeholder="Todas")
+
+    # Si hay vehículos seleccionados, limitamos el dataframe *antes* de las opciones de Tipo
     if vehiculos:
         dff = dff[dff["nombre_dispositivo"].isin(vehiculos)]
+
+    with fil_col3:
+        tipos_v = sorted(dff["tipo_vehiculo"].dropna().unique()) if "tipo_vehiculo" in dff.columns else []
+        tipos = st.multiselect("Tipo de vehículo", tipos_v, placeholder="Todas")
+        
+    # Si hay tipos seleccionados, limitamos el dataframe *antes* de las opciones de Combustible
     if tipos:
         if "tipo_vehiculo" in dff.columns:
             dff = dff[dff["tipo_vehiculo"].isin(tipos)]
-    if combustibles:
+
+    with fil_col4:
         col_activa = "combustible" if "combustible" in dff.columns else "tipo_combustible"
+        combustibles_v = sorted(dff[col_activa].dropna().unique()) if col_activa in dff.columns else []
+        combustibles = st.multiselect("Combustible", combustibles_v, placeholder="Todas")
+        
+    # Aplicamos filtro de combustible
+    if combustibles:
         if col_activa in dff.columns:
             dff = dff[dff[col_activa].isin(combustibles)]
+
+    with fil_col5:
+        # El rango de fechas usa el df original para que siempre muestre el límite real de fechas
+        rango = st.date_input("Periodo", (df["fecha"].min(), df["fecha"].max()))
+
+    # Finalmente, aplicamos el filtro de fechas
     if len(rango) == 2:
         f_min, f_max = pd.Timestamp(rango[0]), pd.Timestamp(rango[1])
         dff = dff[(dff["fecha"] >= f_min) & (dff["fecha"] <= f_max)]
 
+    # --- FIN FILTROS EN CASCADA ---
+
     if not dff.empty:
-        # --- CÁLCULO DE KPIS ---
+        # --- CÁLCULO DE KPIS (Convertidos a Enteros) ---
         total_encendido = dff["encendido_seg"].sum()
         total_ralenti = dff["ralenti_seg"].sum()
         ralenti_actual = int(round((total_ralenti / total_encendido) * 100)) if total_encendido > 0 else 0
@@ -239,17 +250,123 @@ with tab1:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # --- FILA CENTRAL (MANTENIDA) ---
+        # --- FILA CENTRAL ---
         mid_col1, mid_col2, mid_col3 = st.columns([1, 1, 1.2])
+
+        # 1. Columna Grupo
+        with mid_col1:
+            g_df = dff.groupby("grupo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
+            g_df["%ralenti"] = np.where(g_df["encendido_seg"] > 0, (g_df["ralenti_seg"] / g_df["encendido_seg"]) * 100, 0)
+            grupo_df = g_df.sort_values("%ralenti", ascending=False)
+            
+            html_grupo = "<div class='section-box'><div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:15px;'>% RALENTÍ POR GRUPO ℹ️</div>"
+            for _, row in grupo_df.iterrows():
+                pct = int(round(row["%ralenti"]))
+                dev_val = int(round(pct - META_RALENTI))
+                dev_str = f"+{dev_val} p.p." if dev_val >= 0 else f"{dev_val} p.p."
+                dev_color = "#d93025" if dev_val > 0 else "#1e7e34"
+                bar_color = "#e67e22" if pct > META_RALENTI else "#2ecc71"
+                html_grupo += "<div style='margin-bottom: 11px; font-size:13px;'>"
+                html_grupo += "<div style='display:flex; justify-content:space-between; margin-bottom:3px; font-weight:600;'>"
+                html_grupo += "<span style='color:#333;'>" + str(row['grupo']) + "</span>"
+                html_grupo += "<span style='color:#111;'>" + str(pct) + "% <span style='color:" + dev_color + "; font-size:11px; margin-left:5px;'>" + dev_str + "</span></span></div>"
+                html_grupo += "<div style='background-color:#edf2f7; border-radius:4px; height:8px; width:100%;'>"
+                html_grupo += "<div style='background-color:" + bar_color + "; width:" + str(min(pct, 100)) + "%; height:8px; border-radius:4px;'></div></div></div>"
+            html_grupo += "</div>"
+            st.markdown(html_grupo, unsafe_allow_html=True)
+
+        # 2. Columna Tipo de Vehículo
+        with mid_col2:
+            html_tipo = "<div class='section-box'><div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:15px;'>% RALENTÍ POR TIPO DE VEHÍCULO ℹ️</div>"
+            if "tipo_vehiculo" in dff.columns and not dff["tipo_vehiculo"].isna().all():
+                t_df = dff.groupby("tipo_vehiculo").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
+                t_df["%ralenti"] = np.where(t_df["encendido_seg"] > 0, (t_df["ralenti_seg"] / t_df["encendido_seg"]) * 100, 0)
+                tipo_df = t_df.sort_values("%ralenti", ascending=False)
+                
+                for _, row in tipo_df.iterrows():
+                    pct = int(round(row["%ralenti"]))
+                    dev_val = int(round(pct - META_RALENTI))
+                    dev_str = f"+{dev_val} p.p." if dev_val >= 0 else f"{dev_val} p.p."
+                    dev_color = "#d93025" if dev_val > 0 else "#1e7e34"
+                    bar_color = "#1e7e34" if pct <= META_RALENTI else "#e67e22"
+                    html_tipo += "<div style='margin-bottom: 11px; font-size:13px;'>"
+                    html_tipo += "<div style='display:flex; justify-content:space-between; margin-bottom:3px; font-weight:600;'>"
+                    html_tipo += "<span style='color:#333;'>" + str(row['tipo_vehiculo']) + "</span>"
+                    html_tipo += "<span style='color:#111;'>" + str(pct) + "% <span style='color:" + dev_color + "; font-size:11px; margin-left:5px;'>" + dev_str + "</span></span></div>"
+                    html_tipo += "<div style='background-color:#edf2f7; border-radius:4px; height:8px; width:100%;'>"
+                    html_tipo += "<div style='background-color:" + bar_color + "; width:" + str(min(pct, 100)) + "%; height:8px; border-radius:4px;'></div></div></div>"
+            else:
+                html_tipo += "<p style='color:#777; font-size:13px; padding-top:10px;'>No hay datos de tipo de vehículo disponibles.</p>"
+            html_tipo += "</div>"
+            st.markdown(html_tipo, unsafe_allow_html=True)
+
+        # 3. Columna Ranking Tabla Compacta
+        with mid_col3:
+            top_df = dff.groupby("nombre_dispositivo").agg({"ralenti_seg": "sum", "encendido_seg": "sum", "grupo": "first"}).reset_index()
+            top = top_df.copy()
+            top["%ralenti"] = np.where(top["encendido_seg"] > 0, (top["ralenti_seg"] / top["encendido_seg"]) * 100, 0)
+            
+            top["Horas Ralentí"] = (top["ralenti_seg"] / 3600).round().astype(int)
+            top["Horas Operativas"] = (top["encendido_seg"] / 3600).round().astype(int)
+            top = top.sort_values("%ralenti", ascending=False).head(5)
+            
+            html_top = "<div class='section-box'><div style='font-size:14px; font-weight:bold; color:#111; margin-bottom:10px;'>TOP 5 (POR % RALENTÍ)</div>"
+            html_top += "<table style='width:100%; border-collapse: collapse; font-size:11px; text-align:left; table-layout: auto;'>"
+            
+            html_top += "<tr style='border-bottom: 2px solid #edf2f7; color:#555; font-weight:bold; white-space: nowrap;'>"
+            html_top += "<th style='padding:4px;'>#</th><th style='padding:4px;'>Placa</th><th style='padding:4px;'>Grupo</th><th style='padding:4px;'>% Ral. (H)</th><th style='padding:4px;'>H. Operativas</th></tr>"
+            
+            for idx, (_, row) in enumerate(top.iterrows(), 1):
+                html_top += "<tr style='border-bottom: 1px solid #edf2f7; font-weight:600; color:#333; white-space: nowrap;'>"
+                html_top += "<td style='padding:5px 4px;'>" + str(idx) + "</td>"
+                html_top += "<td style='padding:7px 4px; color:#1e7e34;'>" + str(row['nombre_dispositivo']) + "</td>"
+                html_top += "<td style='padding:5px 4px; color:#555;'>" + str(row['grupo']) + "</td>" 
+                
+                pct_entero = int(round(row['%ralenti']))
+                horas_ral_entero = int(row['Horas Ralentí'])
+                horas_op_entero = int(row['Horas Operativas'])
+                
+                html_top += "<td style='padding:5px 4px; color:#d93025;'>" + str(pct_entero) + "% <span style='color:#555; font-weight:normal; font-size:10px;'>(" + str(horas_ral_entero) + "h)</span></td>"
+                html_top += "<td style='padding:5px 4px;'>" + str(horas_op_entero) + " h</td></tr>"
+            html_top += "</table></div>"
+            st.markdown(html_top, unsafe_allow_html=True)
+
+        # --- EVOLUCIÓN GRÁFICA INFERIOR ---
+        st.markdown("<br>", unsafe_allow_html=True)
         
-        # [SECCIÓN FILA CENTRAL - CÓDIGO ORIGINAL SE MANTIENE AQUÍ...]
-        # (Aquí va la lógica de los gráficos de barras y tablas que ya tenías)
+        ultima_fecha = dff["fecha"].max()
+        ultimo_mes = ultima_fecha.month
+        ultimo_ano = ultima_fecha.year
+        nombre_mes_ano = ultima_fecha.strftime('%m/%Y')
         
-        # --- EVOLUCIÓN GRÁFICA INFERIOR (MANTENIDA) ---
-        # (Aquí va la lógica del gráfico de líneas que ya tenías)
+        st.markdown(f"<div style='font-size:14px; font-weight:bold; color:#111; margin-left:5px; margin-bottom:5px;'>EVOLUCIÓN DEL % RALENTÍ (ÚLTIMO MES DISPONIBLE: {nombre_mes_ano}) ℹ️</div>", unsafe_allow_html=True)
+        
+        dff_ultimo_mes = dff[(dff["fecha"].dt.month == ultimo_mes) & (dff["fecha"].dt.year == ultimo_ano)]
+
+        if not dff_ultimo_mes.empty:
+            evo = dff_ultimo_mes.groupby("fecha").agg({"ralenti_seg": "sum", "encendido_seg": "sum"}).reset_index()
+            evo["%ralenti"] = np.where(evo["encendido_seg"] > 0, (evo["ralenti_seg"] / evo["encendido_seg"]) * 100, 0)
+            
+            evo["%ralenti"] = evo["%ralenti"].round().astype(int)
+            evo["fecha_str"] = evo["fecha"].dt.strftime('%d/%m')
+
+            fig = px.line(evo, x="fecha_str", y="%ralenti", markers=True, text="%ralenti")
+            fig.update_traces(line_color="#1e7e34", line_width=2.5, marker=dict(size=7, color="#1e7e34"), textposition="top center", texttemplate="%{text}%")
+            fig.add_hline(y=META_RALENTI, line_dash="dash", line_color="#e67e22", line_width=1.5)
+            fig.update_layout(
+                xaxis_title="", yaxis_title="", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                margin=dict(l=10, r=10, t=25, b=10), height=260,
+                yaxis=dict(showgrid=True, gridcolor='#f0f0f0', range=[0, max(evo["%ralenti"].max() + 5, 20)])
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No se registran datos para graficar en el rango seleccionado.")
+    else:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.info("⚠️ No hay datos disponibles para los filtros seleccionados. Intenta cambiar el rango de fechas o los filtros.")
 
 # =====================================================
-# PESTAÑA 2: HOJA DE VIDA DEL INDICADOR (MODIFICADA SEGÚN SOLICITUD)
+# PESTAÑA 2: HOJA DE VIDA DEL INDICADOR (Estructura Sin Sección 6)
 # =====================================================
 with tab2:
     st.markdown("""
@@ -262,15 +379,15 @@ with tab2:
     * **Macro-procesos Responsables:** Logística, Distribución y Compras.
     * **Tipo de Indicador:** Eficiencia Operativa / Control de Costos.
     * **Unidad de Medida:** Porcentaje (%).
-    * **Periodicidad de Captura:** Diaria.
+    * **Periodicidad de Captura:** Diaria (acumulado dinámico según selección).
     * **Periodicidad de Análisis:** Mensual (medido en puntos porcentuales - p.p.).
     
     ---
     
     ### 🎯 2. OBJETIVOS Y METAS
     * **Objetivo General:** Monitorear y controlar el tiempo improductivo de la flota vehicular (motor encendido sin desplazamiento) para minimizar el gasto innecesario de combustible y reducir el desgaste prematuro de los componentes mecánicos del motor.
-    * **Línea Base Histórica:** 18%
-    * **Meta:** $\le$ 10% de tiempo en ralentí sobre el tiempo total de encendido de la flota.
+    * **Línea Base Histórica:** 18% (Mes anterior de referencia).
+    * **Meta Institucional:** $\le$ 10% de tiempo en ralentí sobre el tiempo total de encendido de la flota.
     
     ---
     
@@ -281,22 +398,30 @@ with tab2:
     st.markdown(r"$$\% \text{ Ralentí} = \left( \frac{\text{Tiempo Detenido (seg)}}{\text{Tiempo Encendido (seg)}} \right) \times 100$$")
     
     st.markdown("""
+    #### Glosario de Variables del Sistema:
+    * **Tiempo Detenido (Numerador):** Segundos totales acumulados en los que el vehículo permaneció en estado estacionario (velocidad = 0) con el sistema de ignición activo (`detenido_seg` / `ralenti_seg`).
+    * **Tiempo Encendido (Denominador):** Segundos totales acumulados de operación activa de los motores (`encendido_seg`).
+    
     ---
     
     ### 🚦 4. NIVELES DE ALERTA (SEMÁFORO)
-    | Rango de Cumplimiento | Estado de Alerta | Plan de Acción |
+    | Rango de Cumplimiento | Estado de Alerta | Plan de Acción Institucional |
     | :---: | :---: | :--- |
-    | **$\le$ 10%** | 🟢 **Óptimo** | Operación eficiente de la flota. |
-    | **11% a 15%** | 🟡 **Alerta** | Desviación moderada. Monitorear tiempos de espera. |
-    | **> 15%** | 🔴 **Crítico** | Operación ineficiente. Requiere auditoría inmediata por placa y llamado a revisión con el director del área. |
+    | **$\le$ 10%** | 🟢 **Óptimo** | Operación eficiente de la flota. Mantener estándares y replicar buenas prácticas de conducción. |
+    | **11% a 15%** | 🟡 **Alerta** | Desviación moderada. Monitorear tiempos de espera en zonas logísticas de carga/descarga. |
+    | **> 15%** | 🔴 **Crítico** | Operación ineficiente. Requiere auditoría inmediata por placa y llamado a revisión con el supervisor de área. |
     
     ---
     
     ### 🏢 5. RESPONSABLES Y ÁREAS OPERATIVAS
+    El indicador se evalúa de manera transversal controlando los siguientes frentes de trabajo indexados en el sistema:
+    
     | Macro-Área Responsable | Grupo Operativo (Filtro) | Enfoque Crítico del Análisis en Ralentí |
     | :--- | :--- | :--- |
-    | **Logística** | 🚚 Primera Milla | Control de tiempos de espera en plantas, Cedis, Centros de Empaque. |
-    | **Logística** | 🔄 Transporte Interno | Control de tiempos de espera en plantas de alimentos, producciones avicolas y plantas clasificadoras. |
+    | **Logística** | 🚚 Primera Milla | Control de tiempos de espera en puertos, centros de acopio o transferencias iniciales. |
+    | **Logística** | 🔄 Transporte Interno | Control de eficiencia en movimientos inter-plantas o patios internos de la compañía. |
     | **Distribución** | 📍 Última Milla | Gestión del impacto del tráfico urbano, entregas capilares y ventanas de recibo de clientes. |
     | **Compras** | 📦 Materias Primas | Auditoría de tiempos de espera asociados al abastecimiento por parte de proveedores nacionales. |
+    
+    *Dimensiones analíticas complementarias:* Análisis granular por **Placa** (Módulo TOP 5 de desvíos), **Tipo de Vehículo** (seguimiento prioritario a flotas pesadas como el Dobletroque) y tipo de **Combustible**.
     """)
