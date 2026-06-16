@@ -396,7 +396,7 @@ with tab2:
     ---
     
     ### 🚦 4. NIVELES DE ALERTA (SEMÁFORO)
-    | Rango de Cumplimiento | Estado de Alerta | Plan de Acción |
+    | Rango de Cumplimiento | Estado de Alerta | Plan de Acción Institucional |
     | :---: | :---: | :--- |
     | **$\le$ 10%** | 🟢 **Óptimo** | Operación eficiente de la flota. Mantener estándares y replicar buenas prácticas de conducción. |
     | **11% a 15%** | 🟡 **Alerta** | Desviación moderada. Monitorear tiempos de espera en zonas logísticas de carga/descarga. |
@@ -410,7 +410,7 @@ with tab2:
     | Macro-Área Responsable | Grupo Operativo (Filtro) | Enfoque Crítico del Análisis en Ralentí |
     | :--- | :--- | :--- |
     | **Logística** | 🚚 Primera Milla | Control de tiempos de espera en plantas, Cedis y Centros de Empaque. |
-    | **Logística** | 🔄 Transporte Interno | Control de eficiencia en movimientos inter-plantas o patios internos de la compañía. |
+    | **Logística** | 🔄 Transporte Interno | Control de eficiencia en movimientos de plantas de alimentos, producciones avicolas y plantas clasificadoras. |
     | **Distribución** | 📍 Última Milla | Gestión del impacto del tráfico urbano, entregas capilares y ventanas de recibo de clientes. |
     | **Compras** | 📦 Materias Primas | Auditoría de tiempos de espera asociados al abastecimiento por parte de proveedores nacionales. |
     
