@@ -144,20 +144,17 @@ with tab1:
     # --- FILTROS EN CASCADA ---
     fil_col1, fil_col2, fil_col3, fil_col4, fil_col5 = st.columns([1.8, 1.8, 1.8, 1.8, 2.8])
 
-    # Inicializamos dff aquí para irlo reduciendo paso a paso según las selecciones
     dff = df.copy()
 
     with fil_col1:
         grupos = st.multiselect("Grupo", sorted(df["grupo"].unique()), placeholder="Todas")
     
-    # Si hay grupos seleccionados, limitamos el dataframe *antes* de mostrar las opciones de Vehículo
     if grupos:
         dff = dff[dff["grupo"].isin(grupos)]
 
     with fil_col2:
         vehiculos = st.multiselect("Vehículo", sorted(dff["nombre_dispositivo"].unique()), placeholder="Todas")
 
-    # Si hay vehículos seleccionados, limitamos el dataframe *antes* de las opciones de Tipo
     if vehiculos:
         dff = dff[dff["nombre_dispositivo"].isin(vehiculos)]
 
@@ -165,7 +162,6 @@ with tab1:
         tipos_v = sorted(dff["tipo_vehiculo"].dropna().unique()) if "tipo_vehiculo" in dff.columns else []
         tipos = st.multiselect("Tipo de vehículo", tipos_v, placeholder="Todas")
         
-    # Si hay tipos seleccionados, limitamos el dataframe *antes* de las opciones de Combustible
     if tipos:
         if "tipo_vehiculo" in dff.columns:
             dff = dff[dff["tipo_vehiculo"].isin(tipos)]
@@ -175,16 +171,13 @@ with tab1:
         combustibles_v = sorted(dff[col_activa].dropna().unique()) if col_activa in dff.columns else []
         combustibles = st.multiselect("Combustible", combustibles_v, placeholder="Todas")
         
-    # Aplicamos filtro de combustible
     if combustibles:
         if col_activa in dff.columns:
             dff = dff[dff[col_activa].isin(combustibles)]
 
     with fil_col5:
-        # El rango de fechas usa el df original para que siempre muestre el límite real de fechas
         rango = st.date_input("Periodo", (df["fecha"].min(), df["fecha"].max()))
 
-    # Finalmente, aplicamos el filtro de fechas
     if len(rango) == 2:
         f_min, f_max = pd.Timestamp(rango[0]), pd.Timestamp(rango[1])
         dff = dff[(dff["fecha"] >= f_min) & (dff["fecha"] <= f_max)]
@@ -192,7 +185,6 @@ with tab1:
     # --- FIN FILTROS EN CASCADA ---
 
     if not dff.empty:
-        # --- CÁLCULO DE KPIS (Convertidos a Enteros) ---
         total_encendido = dff["encendido_seg"].sum()
         total_ralenti = dff["ralenti_seg"].sum()
         ralenti_actual = int(round((total_ralenti / total_encendido) * 100)) if total_encendido > 0 else 0
@@ -379,15 +371,15 @@ with tab2:
     * **Macro-procesos Responsables:** Logística, Distribución y Compras.
     * **Tipo de Indicador:** Eficiencia Operativa / Control de Costos.
     * **Unidad de Medida:** Porcentaje (%).
-    * **Periodicidad de Captura:** Diaria (acumulado dinámico según selección).
+    * **Periodicidad de Captura:** Diaria.
     * **Periodicidad de Análisis:** Mensual (medido en puntos porcentuales - p.p.).
     
     ---
     
     ### 🎯 2. OBJETIVOS Y METAS
     * **Objetivo General:** Monitorear y controlar el tiempo improductivo de la flota vehicular (motor encendido sin desplazamiento) para minimizar el gasto innecesario de combustible y reducir el desgaste prematuro de los componentes mecánicos del motor.
-    * **Línea Base Histórica:** 18% (Mes anterior de referencia).
-    * **Meta Institucional:** $\le$ 10% de tiempo en ralentí sobre el tiempo total de encendido de la flota.
+    * **Línea Base Histórica:** 18%
+    * **Meta:** $\le$ 10% de tiempo en ralentí sobre el tiempo total de encendido de la flota.
     
     ---
     
