@@ -391,7 +391,7 @@ with tab2:
     st.markdown("""
     #### Glosario de Variables del Sistema:
     * **Tiempo Detenido (Numerador):** Segundos totales acumulados en los que el vehículo permaneció en estado estacionario (velocidad = 0) con el sistema de ignición activo (`detenido_seg` / `ralenti_seg`).
-    * **Tiempo Encendido (Denominador):** Segundos totales acumulados de operation activa de los motores (`encendido_seg`).
+    * **Tiempo Encendido (Denominador):** Segundos totales acumulados de operación activa de los motores (`encendido_seg`).
     
     ---
     
@@ -413,6 +413,4 @@ with tab2:
     | **Logística** | 🔄 Transporte Interno | Control de eficiencia en movimientos inter-plantas o patios internos de la compañía. |
     | **Distribución** | 📍 Última Milla | Gestión del impacto del tráfico urbano, entregas capilares y ventanas de recibo de clientes. |
     | **Compras** | 📦 Materias Primas | Auditoría de tiempos de espera asociados al abastecimiento por parte de proveedores nacionales. |
-    
-    *Dimensiones analíticas complementarias:* Análisis granular por **Placa** (Módulo TOP 5 de desvíos), **Tipo de Vehículo** (seguimiento prioritario a flotas pesadas como el Dobletroque) y tipo de **Combustible**.
     """)
