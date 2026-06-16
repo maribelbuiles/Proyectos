@@ -391,12 +391,12 @@ with tab2:
     st.markdown("""
     #### Glosario de Variables del Sistema:
     * **Tiempo Detenido (Numerador):** Segundos totales acumulados en los que el vehículo permaneció en estado estacionario (velocidad = 0) con el sistema de ignición activo (`detenido_seg` / `ralenti_seg`).
-    * **Tiempo Encendido (Denominador):** Segundos totales acumulados de operación activa de los motores (`encendido_seg`).
+    * **Tiempo Encendido (Denominador):** Segundos totales acumulados de operation activa de los motores (`encendido_seg`).
     
     ---
     
     ### 🚦 4. NIVELES DE ALERTA (SEMÁFORO)
-    | Rango de Cumplimiento | Estado de Alerta | Plan de Acción Institucional |
+    | Rango de Cumplimiento | Estado de Alerta | Plan de Acción |
     | :---: | :---: | :--- |
     | **$\le$ 10%** | 🟢 **Óptimo** | Operación eficiente de la flota. Mantener estándares y replicar buenas prácticas de conducción. |
     | **11% a 15%** | 🟡 **Alerta** | Desviación moderada. Monitorear tiempos de espera en zonas logísticas de carga/descarga. |
