@@ -407,7 +407,7 @@ with tab2:
     ### 🏢 5. RESPONSABLES Y ÁREAS OPERATIVAS
     El indicador se evalúa de manera transversal controlando los siguientes frentes de trabajo indexados en el sistema:
     
-    | Macro-Área Responsable | Grupo Operativo (Filtro) | Enfoque Crítico del Análisis en Ralentí |
+    | Macro-Área Responsable | Grupo Operativo | Enfoque Crítico del Análisis en Ralentí |
     | :--- | :--- | :--- |
     | **Logística** | 🚚 Primera Milla | Control de tiempos de espera en plantas, Cedis y Centros de Empaque. |
     | **Logística** | 🔄 Transporte Interno | Control de eficiencia en movimientos de plantas de alimentos, producciones avicolas y plantas clasificadoras. |
