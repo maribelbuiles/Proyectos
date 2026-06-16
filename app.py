@@ -141,44 +141,55 @@ tab1, tab2 = st.tabs(["📊 Tablero de Control", "📋 Hoja de Vida del Indicado
 # PESTAÑA 1: TABLERO DE CONTROL (Operación de la Flota)
 # =====================================================
 with tab1:
-    # --- FILTROS ---
+    # --- FILTROS EN CASCADA ---
     fil_col1, fil_col2, fil_col3, fil_col4, fil_col5 = st.columns([1.8, 1.8, 1.8, 1.8, 2.8])
+
+    # Inicializamos dff aquí para irlo reduciendo paso a paso según las selecciones
+    dff = df.copy()
 
     with fil_col1:
         grupos = st.multiselect("Grupo", sorted(df["grupo"].unique()), placeholder="Todas")
-    with fil_col2:
-        vehiculos = st.multiselect("Vehículo", sorted(df["nombre_dispositivo"].unique()), placeholder="Todas")
-    with fil_col3:
-        tipos_v = sorted(df["tipo_vehiculo"].dropna().unique()) if "tipo_vehiculo" in df.columns else []
-        tipos = st.multiselect("Tipo de vehículo", tipos_v, placeholder="Todas")
-    with fil_col4:
-        if "combustible" in df.columns:
-            combustibles_v = sorted(df["combustible"].dropna().unique())
-        elif "tipo_combustible" in df.columns:
-            combustibles_v = sorted(df["tipo_combustible"].dropna().unique())
-        else:
-            combustibles_v = []
-        combustibles = st.multiselect("Combustible", combustibles_v, placeholder="Todas")
-    with fil_col5:
-        rango = st.date_input("Periodo", (df["fecha"].min(), df["fecha"].max()))
-
-    # Filtrado dinámico del DataFrame
-    dff = df.copy()
-
+    
+    # Si hay grupos seleccionados, limitamos el dataframe *antes* de mostrar las opciones de Vehículo
     if grupos:
         dff = dff[dff["grupo"].isin(grupos)]
+
+    with fil_col2:
+        vehiculos = st.multiselect("Vehículo", sorted(dff["nombre_dispositivo"].unique()), placeholder="Todas")
+
+    # Si hay vehículos seleccionados, limitamos el dataframe *antes* de las opciones de Tipo
     if vehiculos:
         dff = dff[dff["nombre_dispositivo"].isin(vehiculos)]
+
+    with fil_col3:
+        tipos_v = sorted(dff["tipo_vehiculo"].dropna().unique()) if "tipo_vehiculo" in dff.columns else []
+        tipos = st.multiselect("Tipo de vehículo", tipos_v, placeholder="Todas")
+        
+    # Si hay tipos seleccionados, limitamos el dataframe *antes* de las opciones de Combustible
     if tipos:
         if "tipo_vehiculo" in dff.columns:
             dff = dff[dff["tipo_vehiculo"].isin(tipos)]
-    if combustibles:
+
+    with fil_col4:
         col_activa = "combustible" if "combustible" in dff.columns else "tipo_combustible"
+        combustibles_v = sorted(dff[col_activa].dropna().unique()) if col_activa in dff.columns else []
+        combustibles = st.multiselect("Combustible", combustibles_v, placeholder="Todas")
+        
+    # Aplicamos filtro de combustible
+    if combustibles:
         if col_activa in dff.columns:
             dff = dff[dff[col_activa].isin(combustibles)]
+
+    with fil_col5:
+        # El rango de fechas usa el df original para que siempre muestre el límite real de fechas
+        rango = st.date_input("Periodo", (df["fecha"].min(), df["fecha"].max()))
+
+    # Finalmente, aplicamos el filtro de fechas
     if len(rango) == 2:
         f_min, f_max = pd.Timestamp(rango[0]), pd.Timestamp(rango[1])
         dff = dff[(dff["fecha"] >= f_min) & (dff["fecha"] <= f_max)]
+
+    # --- FIN FILTROS EN CASCADA ---
 
     if not dff.empty:
         # --- CÁLCULO DE KPIS (Convertidos a Enteros) ---
