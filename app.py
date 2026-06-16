@@ -409,8 +409,10 @@ with tab2:
     
     | Macro-Área Responsable | Grupo Operativo (Filtro) | Enfoque Crítico del Análisis en Ralentí |
     | :--- | :--- | :--- |
-    | **Logística** | 🚚 Primera Milla | Control de tiempos de espera en puertos, centros de acopio o transferencias iniciales. |
+    | **Logística** | 🚚 Primera Milla | Control de tiempos de espera en plantas, Cedis y Centros de Empaque. |
     | **Logística** | 🔄 Transporte Interno | Control de eficiencia en movimientos inter-plantas o patios internos de la compañía. |
     | **Distribución** | 📍 Última Milla | Gestión del impacto del tráfico urbano, entregas capilares y ventanas de recibo de clientes. |
     | **Compras** | 📦 Materias Primas | Auditoría de tiempos de espera asociados al abastecimiento por parte de proveedores nacionales. |
+    
+    *Dimensiones analíticas complementarias:* Análisis granular por **Placa** (Módulo TOP 5 de desvíos), **Tipo de Vehículo** (seguimiento prioritario a flotas pesadas como el Dobletroque) y tipo de **Combustible**.
     """)
