@@ -378,7 +378,6 @@ with tab2:
     
     ### 🎯 2. OBJETIVOS Y METAS
     * **Objetivo General:** Monitorear y controlar el tiempo improductivo de la flota vehicular (motor encendido sin desplazamiento) para minimizar el gasto innecesario de combustible y reducir el desgaste prematuro de los componentes mecánicos del motor.
-    * **Línea Base Histórica:** 18%
     * **Meta:** $\le$ 10% de tiempo en ralentí sobre el tiempo total de encendido de la flota.
     
     ---
