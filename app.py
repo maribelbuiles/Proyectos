@@ -413,6 +413,4 @@ with tab2:
     | **Logística** | 🔄 Transporte Interno | Control de eficiencia en movimientos de plantas de alimentos, producciones avicolas y plantas clasificadoras. |
     | **Distribución** | 📍 Última Milla | Gestión del impacto del tráfico urbano, entregas capilares y ventanas de recibo de clientes. |
     | **Compras** | 📦 Materias Primas | Auditoría de tiempos de espera asociados al abastecimiento por parte de proveedores. |
-    
-    *Dimensiones analíticas complementarias:* Análisis granular por **Placa** (Módulo TOP 5 de desvíos), **Tipo de Vehículo** (seguimiento prioritario a flotas pesadas como el Dobletroque) y tipo de **Combustible**.
     """)
