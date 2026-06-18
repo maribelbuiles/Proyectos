@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit st
 import pandas as pd
 import numpy as np
 import requests
@@ -341,10 +341,13 @@ with tab1:
             
             evo["%ralenti"] = evo["%ralenti"].round().astype(int)
             evo["fecha_str"] = evo["fecha"].dt.strftime('%d/%m')
+            evo["horas_ralenti"] = (evo["ralenti_seg"] / 3600).round(1)
 
-            fig = px.line(evo, x="fecha_str", y="%ralenti", markers=True, text="%ralenti")
-            fig.update_traces(line_color="#1e7e34", line_width=2.5, marker=dict(size=7, color="#1e7e34"), textposition="top center", texttemplate="%{text}%")
-            fig.add_hline(y=META_RALENTI, line_dash="dash", line_color="#e67e22", line_width=1.5)
+            fig = px.line(evo, x="fecha_str", y="%ralenti", markers=True, text="%ralenti", hover_data=["horas_ralenti"])
+            fig.update_traces(
+                line_color="#1e7e34", line_width=2.5, marker=dict(size=7, color="#1e7e34"), textposition="top center", texttemplate="%{text}%",
+                hovertemplate="<b>% Ralentí:</b> %{y}%<br><b>Horas Ralentí:</b> %{customdata[0]}h<extra></extra>"
+            )
             fig.update_layout(
                 xaxis_title="", yaxis_title="", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
                 margin=dict(l=10, r=10, t=25, b=10), height=260,
