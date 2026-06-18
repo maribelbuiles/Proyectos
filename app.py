@@ -413,4 +413,10 @@ with tab2:
     | **Logística** | 🔄 Transporte Interno | Control de eficiencia en movimientos de plantas de alimentos, producciones avicolas y plantas clasificadoras. |
     | **Distribución** | 📍 Última Milla | Gestión del impacto del tráfico urbano, entregas capilares y ventanas de recibo de clientes. |
     | **Compras** | 📦 Materias Primas | Auditoría de tiempos de espera asociados al abastecimiento por parte de proveedores. |
+    
+    ---
+    
+    ### 🌐 6. FUENTE DE DATOS
+    * **Origen de la información:** Integración automatizada vía API REST con la plataforma Bronto-Byte (`https://app.bronto-byte.com`).
+    * **Consumo de datos:** Endpoint `/api/v2/gps-resumen/vehiculos`.
     """)
