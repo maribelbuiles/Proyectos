@@ -371,7 +371,7 @@ with tab2:
     
     ### 🔍 1. DATOS BÁSICOS DEL INDICADOR
     * **Nombre del Indicador:** Porcentaje de Tiempo en Ralentí (% Ralentí).
-    * **Macro-procesos Responsables:** Logística, Distribución y Compras.
+    * **Macro-procesos Responsables:** Logística, Distribución y Abastecimiento Materias Primas.
     * **Tipo de Indicador:** Eficiencia Operativa / Control de Costos.
     * **Unidad de Medida:** Porcentaje (%).
     * **Periodicidad de Captura:** Diaria.
